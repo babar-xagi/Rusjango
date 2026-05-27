@@ -11,7 +11,11 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "rusjango", version, about = "Rusjango — Rust-powered async Python framework")]
+#[command(
+    name = "rusjango",
+    version,
+    about = "Rusjango — Rust-powered async Python framework"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -87,7 +91,11 @@ fn main() -> Result<()> {
         Commands::New { name, directory } => {
             new::run(&name, directory.as_deref())?;
         }
-        Commands::Dev { host, port, no_reload } => {
+        Commands::Dev {
+            host,
+            port,
+            no_reload,
+        } => {
             dev::run(&host, port, no_reload)?;
         }
         Commands::Migrate => orm::run_migrate()?,

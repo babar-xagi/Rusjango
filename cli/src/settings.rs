@@ -13,8 +13,8 @@ pub fn add_installed_app(settings_path: &Path, module: &str) -> Result<()> {
         return Ok(());
     }
 
-    let new_content = if let Some(caps) = Regex::new(r"(?m)^(INSTALLED_APPS\s*=\s*)\[\s*\]\s*$")?
-        .captures(&content)
+    let new_content = if let Some(caps) =
+        Regex::new(r"(?m)^(INSTALLED_APPS\s*=\s*)\[\s*\]\s*$")?.captures(&content)
     {
         let indent = "    ";
         content.replace(
@@ -24,8 +24,8 @@ pub fn add_installed_app(settings_path: &Path, module: &str) -> Result<()> {
                 caps.get(1).unwrap().as_str(),
             ),
         )
-    } else if let Some(caps) = Regex::new(r"(?ms)^(INSTALLED_APPS\s*=\s*\[)(.*?)(\n\])")?
-        .captures(&content)
+    } else if let Some(caps) =
+        Regex::new(r"(?ms)^(INSTALLED_APPS\s*=\s*\[)(.*?)(\n\])")?.captures(&content)
     {
         let prefix = caps.get(1).unwrap().as_str();
         let body = caps.get(2).unwrap().as_str();
@@ -50,10 +50,7 @@ pub fn remove_installed_app(settings_path: &Path, module: &str) -> Result<()> {
         bail!("App {module:?} is not registered in INSTALLED_APPS");
     }
 
-    let line_pattern = Regex::new(&format!(
-        r#"(?m)^\s*"{}"?,?\s*\n"#,
-        regex::escape(module)
-    ))?;
+    let line_pattern = Regex::new(&format!(r#"(?m)^\s*"{}"?,?\s*\n"#, regex::escape(module)))?;
     let new_content = line_pattern.replace_all(&content, "").to_string();
 
     let new_content = Regex::new(r"(?m)^INSTALLED_APPS\s*=\s*\[\s*\n\s*\]")?
@@ -80,7 +77,9 @@ pub fn ensure_main_loads_apps(main_path: &Path) -> Result<()> {
 
 pub fn remove_main_loads_apps(main_path: &Path) -> Result<()> {
     let content = fs::read_to_string(main_path)?;
-    let pattern = Regex::new(r"(?m)^# Load routers from INSTALLED_APPS\s*\napp\.load_installed_apps\(\)\s*\n?")?;
+    let pattern = Regex::new(
+        r"(?m)^# Load routers from INSTALLED_APPS\s*\napp\.load_installed_apps\(\)\s*\n?",
+    )?;
     if pattern.is_match(&content) {
         fs::write(main_path, pattern.replace_all(&content, "").to_string())?;
     }

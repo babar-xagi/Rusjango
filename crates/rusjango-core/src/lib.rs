@@ -10,6 +10,9 @@ mod router;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(router::route_count, m)?)?;
-    m.add("__doc__", "Rusjango Rust core (routing acceleration in future releases)")?;
+    m.add(
+        "__doc__",
+        "Rusjango Rust core (routing acceleration in future releases)",
+    )?;
     Ok(())
 }

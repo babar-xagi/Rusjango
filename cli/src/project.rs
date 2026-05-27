@@ -29,7 +29,10 @@ pub fn validate_project_name(name: &str) -> Result<()> {
     if name.is_empty() {
         bail!("Project name cannot be empty");
     }
-    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+    if !name
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
         bail!("Project name may only contain letters, numbers, hyphens, and underscores");
     }
     Ok(())
@@ -42,7 +45,12 @@ pub fn render_template(content: &str, project_name: &str, secret_key: &str) -> S
         .replace("{{ secret_key }}", secret_key)
 }
 
-pub fn copy_template_tree(src: &Path, dst: &Path, project_name: &str, secret_key: &str) -> Result<()> {
+pub fn copy_template_tree(
+    src: &Path,
+    dst: &Path,
+    project_name: &str,
+    secret_key: &str,
+) -> Result<()> {
     fs::create_dir_all(dst)?;
     for entry in fs::read_dir(src)? {
         let entry = entry?;
@@ -69,7 +77,8 @@ pub fn copy_template_tree(src: &Path, dst: &Path, project_name: &str, secret_key
 
 pub fn generate_secret_key() -> String {
     use rand::Rng;
-    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*(-_=+)";
+    const CHARSET: &[u8] =
+        b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*(-_=+)";
     let mut rng = rand::thread_rng();
     (0..50)
         .map(|_| {

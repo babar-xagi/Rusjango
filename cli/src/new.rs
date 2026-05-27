@@ -18,10 +18,7 @@ pub fn run(name: &str, directory: Option<&Path>) -> Result<()> {
 
     let template_root = templates_dir().join("project");
     if !template_root.is_dir() {
-        bail!(
-            "Project templates not found at {}",
-            template_root.display()
-        );
+        bail!("Project templates not found at {}", template_root.display());
     }
 
     let secret_key = generate_secret_key();

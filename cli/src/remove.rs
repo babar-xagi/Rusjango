@@ -17,9 +17,7 @@ pub fn run(name: &str, yes: bool) -> Result<()> {
     }
 
     if !yes {
-        eprintln!(
-            "This will remove the '{name}' app and unregister it from settings.py."
-        );
+        eprintln!("This will remove the '{name}' app and unregister it from settings.py.");
         eprint!("Do you want to continue? [y/N] ");
         io::stderr().flush()?;
         let mut line = String::new();
