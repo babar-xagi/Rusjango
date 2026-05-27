@@ -1,0 +1,19 @@
+[package]
+name = "rusjango-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Rusjango command-line interface"
+
+[[bin]]
+name = "rusjango"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+rand = "0.8"
+regex = "1"
+tracing.workspace = true
+tracing-subscriber.workspace = true

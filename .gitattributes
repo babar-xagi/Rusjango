@@ -1,0 +1,29 @@
+# Normalize line endings to LF in the repository for all text files.
+# Windows checkouts will still use CRLF locally (if core.autocrlf=true),
+# but the repo always stores LF — cross-platform consistency.
+
+* text=auto eol=lf
+
+# Rust source
+*.rs     text eol=lf
+*.toml   text eol=lf
+
+# Python source
+*.py     text eol=lf
+*.pyi    text eol=lf
+*.tpl    text eol=lf
+
+# Config / docs
+*.md     text eol=lf
+*.txt    text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.json   text eol=lf
+*.ps1    text eol=crlf
+
+# Binary — never touch line endings
+*.pyd    binary
+*.so     binary
+*.pdb    binary
+*.db     binary
+*.sqlite3 binary

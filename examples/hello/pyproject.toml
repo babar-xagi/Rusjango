@@ -1,0 +1,15 @@
+[project]
+name = "hello"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "aiosqlite>=0.20",
+    "rusjango",
+]
+
+[tool.uv.sources]
+rusjango = { workspace = true }
+
+[tool.rusjango]
+settings = "settings.py"
+app = "main:app"

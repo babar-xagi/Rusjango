@@ -1,0 +1,22 @@
+[project]
+name = "rusjango-workspace"
+version = "0.1.0"
+description = "Rusjango monorepo workspace root"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rusjango",
+]
+
+[tool.uv.sources]
+rusjango = { workspace = true }
+
+[tool.uv.workspace]
+members = ["python/rusjango", "examples/hello"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "maturin>=1.7,<2",
+]
