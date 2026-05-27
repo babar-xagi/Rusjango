@@ -5,20 +5,39 @@ build-backend = "maturin"
 [project]
 name = "rusjango"
 version = "0.1.0"
-description = "Rust-powered async Python web framework"
+description = "Rust-powered async Python web framework — start minimal, grow with rusjango add"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Rusjango Contributors" }]
-keywords = ["web", "async", "framework", "api"]
+keywords = [
+    "web",
+    "framework",
+    "async",
+    "api",
+    "rust",
+    "django",
+    "fastapi",
+    "orm",
+    "asgi",
+    "http",
+]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
     "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Rust",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
 ]
 dependencies = [
     "uvicorn[standard]>=0.32",
@@ -29,15 +48,22 @@ dependencies = [
 postgres = ["asyncpg>=0.29"]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]
 
+[project.urls]
+Homepage     = "https://github.com/babar-xagi/Rusjango"
+Repository   = "https://github.com/babar-xagi/Rusjango"
+Documentation = "https://github.com/babar-xagi/Rusjango/tree/main/docs"
+Changelog    = "https://github.com/babar-xagi/Rusjango/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/babar-xagi/Rusjango/issues"
+
 [project.scripts]
 rusjango = "rusjango.__main__:main"
 
 [tool.maturin]
 manifest-path = "../../crates/rusjango-core/Cargo.toml"
-module-name = "rusjango._core"
+module-name   = "rusjango._core"
 python-source = "src"
-features = ["pyo3/extension-module"]
+features      = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths    = ["tests"]
