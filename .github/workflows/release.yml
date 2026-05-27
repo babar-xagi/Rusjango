@@ -125,7 +125,7 @@ jobs:
       name: pypi
       url: https://pypi.org/project/rusjango
     permissions:
-      id-token: write # required for OIDC trusted publishing
+      id-token: write # kept for future OIDC migration
 
     steps:
       - name: Download all wheels
@@ -142,3 +142,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
