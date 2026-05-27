@@ -4,11 +4,11 @@ build-backend = "maturin"
 
 [project]
 name = "rusjango"
-version = "0.1.1"
+version = "0.1.2"
 description = "Rust-powered async Python web framework — start minimal, grow with rusjango add"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "Rusjango Contributors" }]
 keywords = [
     "web",
