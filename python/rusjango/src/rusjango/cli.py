@@ -28,7 +28,7 @@ app = Rusjango(settings="settings.py")
 
 @app.get("/")
 async def home():
-    return {{"message": "Hello Rusjango"}}
+    return {"message": "Hello Rusjango"}
 
 
 app.load_installed_apps()
@@ -77,7 +77,7 @@ router = Router()
 
 @router.get("/students")
 async def list_students():
-    return [{{"name": "Ali"}}, {{"name": "Sara"}}]
+    return [{"name": "Ali"}, {"name": "Sara"}]
 """
 
 _APP_API_ORM = """\
