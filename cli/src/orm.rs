@@ -1,6 +1,6 @@
-use crate::project::{find_project_root, templates_dir};
+use crate::project::{find_project_root, settings_path, template, APP_API};
+use crate::settings::{database_enabled, installed_apps, replace_database};
 use anyhow::{bail, Result};
-use regex::Regex;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -13,20 +13,16 @@ const DATABASE_BLOCK: &str = r#"DATABASE = {
 
 pub fn add_orm() -> Result<()> {
     let root = find_project_root(Path::new("."))?;
-    let settings_path = root.join("settings.py");
+    let settings_path = settings_path(&root)?;
     let content = fs::read_to_string(&settings_path)?;
+    let apps = list_installed_apps(&settings_path)?;
 
-    if content.contains("DATABASE = {") && !content.contains("DATABASE = None") {
-        println!("ORM already enabled (DATABASE is configured).");
-        return Ok(());
+    if !database_enabled(&content)? {
+        fs::write(
+            &settings_path,
+            replace_database(&content, DATABASE_BLOCK.split_once("= ").unwrap().1)?,
+        )?;
     }
-
-    let new_content = if content.contains("DATABASE = None") {
-        content.replace("DATABASE = None", DATABASE_BLOCK)
-    } else {
-        bail!("Could not find DATABASE = None in settings.py");
-    };
-    fs::write(&settings_path, new_content)?;
 
     let migrations = root.join("migrations");
     fs::create_dir_all(&migrations)?;
@@ -35,45 +31,19 @@ pub fn add_orm() -> Result<()> {
         fs::write(gitkeep, "")?;
     }
 
-    add_pyproject_orm_deps(&root.join("pyproject.toml"))?;
-
-    let apps = list_installed_apps(&settings_path)?;
-    let template_root = templates_dir().join("orm");
     for app in apps {
         let app_dir = root.join("apps").join(&app);
         if !app_dir.is_dir() {
             continue;
         }
-        if !app_dir.join("models.py").exists() {
-            copy_template_file(
-                &template_root.join("models.py.tpl"),
-                &app_dir.join("models.py"),
-                &app,
-            )?;
-        }
-        if !app_dir.join("schemas.py").exists() {
-            copy_template_file(
-                &template_root.join("schemas.py.tpl"),
-                &app_dir.join("schemas.py"),
-                &app,
-            )?;
-        }
-        let api_path = app_dir.join("api.py");
-        if api_path.exists() {
-            let api = fs::read_to_string(&api_path)?;
-            // Upgrade api.py only if it does not already import from the local models module.
-            // This is safe for any app name.
-            if !api.contains("from .models import") && !api.contains("from rusjango.orm import") {
-                copy_template_file(&template_root.join("api_with_orm.py.tpl"), &api_path, &app)?;
-            }
-        }
+        scaffold_app(&app_dir, &app)?;
     }
 
     println!("ORM enabled.");
     println!("  DATABASE configured (SQLite: db.sqlite3)");
     println!("  migrations/ created");
     println!("  models.py / schemas.py added to apps (where missing)");
-    println!("  api.py upgraded with ORM routes (where not already done)");
+    println!("  Untouched starter APIs upgraded; custom APIs preserved");
     println!();
     println!("Next steps:");
     println!("  rusjango migrate   — create tables");
@@ -83,10 +53,10 @@ pub fn add_orm() -> Result<()> {
 
 pub fn remove_orm(yes: bool) -> Result<()> {
     let root = find_project_root(Path::new("."))?;
-    let settings_path = root.join("settings.py");
+    let settings_path = settings_path(&root)?;
     let content = fs::read_to_string(&settings_path)?;
 
-    if !content.contains("DATABASE = {") {
+    if !database_enabled(&content)? {
         println!("ORM is not enabled (DATABASE is None).");
         return Ok(());
     }
@@ -104,8 +74,7 @@ pub fn remove_orm(yes: bool) -> Result<()> {
         }
     }
 
-    let re = Regex::new(r"(?ms)^DATABASE = \{.*?\}\s*$")?;
-    let new_content = re.replace(&content, "DATABASE = None").to_string();
+    let new_content = replace_database(&content, "None")?;
     fs::write(&settings_path, new_content)?;
     println!("ORM disabled (DATABASE = None).");
     Ok(())
@@ -113,29 +82,29 @@ pub fn remove_orm(yes: bool) -> Result<()> {
 
 fn list_installed_apps(settings_path: &Path) -> Result<Vec<String>> {
     let content = fs::read_to_string(settings_path)?;
-    let re = Regex::new(r#""apps\.([a-zA-Z0-9_]+)""#)?;
-    Ok(re
-        .captures_iter(&content)
-        .filter_map(|c| c.get(1).map(|m| m.as_str().to_string()))
+    Ok(installed_apps(&content)?
+        .into_iter()
+        .filter_map(|app| app.strip_prefix("apps.").map(str::to_string))
         .collect())
 }
 
-fn copy_template_file(src: &Path, dst: &Path, app_name: &str) -> Result<()> {
-    let raw = fs::read_to_string(src)?;
+fn copy_template_file(name: &str, dst: &Path, app_name: &str) -> Result<()> {
+    let raw = template(name)?;
     let rendered = raw.replace("{{ app_name }}", app_name);
     fs::write(dst, rendered)?;
     Ok(())
 }
 
-fn add_pyproject_orm_deps(pyproject: &Path) -> Result<()> {
-    let content = fs::read_to_string(pyproject)?;
-    if content.contains("aiosqlite") {
-        return Ok(());
+pub fn scaffold_app(app_dir: &Path, app_name: &str) -> Result<()> {
+    for name in ["models.py", "schemas.py"] {
+        let dst = app_dir.join(name);
+        if !dst.exists() {
+            copy_template_file(&format!("orm/{name}"), &dst, app_name)?;
+        }
     }
-    let re = Regex::new(r"(?m)^dependencies = \[")?;
-    if re.is_match(&content) {
-        let new_content = re.replace(&content, "dependencies = [\n    \"aiosqlite>=0.20\",");
-        fs::write(pyproject, new_content.as_ref())?;
+    let api = app_dir.join("api.py");
+    if api.exists() && fs::read_to_string(&api)?.trim() == APP_API.trim() {
+        copy_template_file("orm/api_with_orm.py", &api, app_name)?;
     }
     Ok(())
 }
@@ -144,7 +113,11 @@ fn rusjango_src_on_path(project_root: &Path) -> Option<std::ffi::OsString> {
     for ancestor in project_root.ancestors() {
         let candidate = ancestor.join("python").join("rusjango").join("src");
         if candidate.is_dir() {
-            return Some(candidate.as_os_str().to_os_string());
+            let mut paths = vec![candidate];
+            if let Some(existing) = std::env::var_os("PYTHONPATH") {
+                paths.extend(std::env::split_paths(&existing));
+            }
+            return std::env::join_paths(paths).ok();
         }
     }
     None
@@ -158,8 +131,15 @@ pub fn run_migrate() -> Result<()> {
     if let Some(src) = rusjango_src_on_path(&root) {
         cmd.env("PYTHONPATH", src);
     }
-    if cmd.status()?.success() {
-        return Ok(());
+    match cmd.status() {
+        Ok(status) => {
+            if status.success() {
+                return Ok(());
+            }
+            bail!("Migration process failed with {status}");
+        }
+        Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+        Err(err) => return Err(err.into()),
     }
     let mut fallback = std::process::Command::new("python");
     fallback
@@ -168,6 +148,9 @@ pub fn run_migrate() -> Result<()> {
     if let Some(src) = rusjango_src_on_path(&root) {
         fallback.env("PYTHONPATH", src);
     }
-    fallback.status()?;
+    let status = fallback.status()?;
+    if !status.success() {
+        bail!("Migration process failed with {status}");
+    }
     Ok(())
 }

@@ -1,6 +1,4 @@
-use crate::project::{
-    copy_template_tree, generate_secret_key, templates_dir, validate_project_name,
-};
+use crate::project::{generate_secret_key, validate_project_name, write_templates};
 use anyhow::{bail, Context, Result};
 use std::fs;
 use std::path::Path;
@@ -16,14 +14,9 @@ pub fn run(name: &str, directory: Option<&Path>) -> Result<()> {
         bail!("Directory already exists: {}", target.display());
     }
 
-    let template_root = templates_dir().join("project");
-    if !template_root.is_dir() {
-        bail!("Project templates not found at {}", template_root.display());
-    }
-
     let secret_key = generate_secret_key();
     fs::create_dir_all(&target).context("create project directory")?;
-    copy_template_tree(&template_root, &target, name, &secret_key)?;
+    write_templates("project", &target, name, &secret_key)?;
 
     println!("Created Rusjango project: {}", target.display());
     println!();

@@ -4,55 +4,82 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
 
 env:
-  # Opt into Node.js 24 early — silences the Node 20 deprecation warnings
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ── Python tests ──────────────────────────────────────────────────────
   test:
-    name: Test — Python ${{ matrix.python }} / ${{ matrix.os }}
+    name: Python ${{ matrix.python }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.12", "3.13", "3.14"]
-
+        python: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
-      - name: Install test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pytest "pytest-asyncio>=0.24" "uvicorn[standard]>=0.32" "aiosqlite>=0.20"
-
-      - name: Run tests
-        working-directory: python/rusjango
+      - name: Install source-test dependencies
+        run: python -m pip install pytest pytest-asyncio "uvicorn[standard]" aiosqlite
+      - name: Run Python tests (live PostgreSQL/Rust checks run in integration job)
         env:
           PYTHONPATH: ${{ github.workspace }}/python/rusjango/src
-        run: python -m pytest tests/ -v
+        run: python -m pytest python/rusjango/tests -v
 
-  # ── Rust checks ───────────────────────────────────────────────────────
-  rust:
-    name: Rust — fmt + clippy
+  integration:
+    name: Rust, PostgreSQL, and distributions
     runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: "3.14"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rusjango
+          POSTGRES_PASSWORD: rusjango
+          POSTGRES_DB: rusjango_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rusjango -d rusjango_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      - name: cargo fmt — check formatting
-        run: cargo fmt --all -- --check
-
-      - name: cargo clippy — CLI
-        run: cargo clippy -p rusjango-cli -- -D warnings
+      - uses: astral-sh/setup-uv@v6
+      - name: Install and build native extension
+        run: uv sync --all-packages --all-extras
+      - name: Check release version consistency
+        run: .venv/bin/python scripts/check_release.py
+      - name: Rust formatting and tests
+        env:
+          PYO3_PYTHON: ${{ github.workspace }}/.venv/bin/python
+        run: |
+          cargo fmt --all -- --check
+          cargo test --workspace
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo build -p rusjango-cli
+      - name: Python lint
+        run: uv run --all-packages --all-extras ruff check python/rusjango/src python/rusjango/tests scripts --select F
+      - name: Both CLIs and real PostgreSQL
+        env:
+          RUSJANGO_RUST_CLI: ${{ github.workspace }}/target/debug/rusjango
+          RUSJANGO_TEST_POSTGRES_DSN: postgresql://rusjango:rusjango@localhost:5432/rusjango_test
+        run: uv run --all-packages --all-extras pytest python/rusjango/tests -v
+      - name: Build wheel and source distribution
+        run: uv build --package rusjango
+      - name: Install wheel in a fresh environment and exercise generated API
+        shell: bash
+        run: .venv/bin/python scripts/verify_wheel.py dist/*.whl

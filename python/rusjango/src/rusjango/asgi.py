@@ -26,7 +26,7 @@ def parse_json_body(body: bytes) -> Any:
         return None
     try:
         return json.loads(body)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise HTTPException(422, detail=f"Invalid JSON: {exc}") from exc
 
 
@@ -37,8 +37,10 @@ async def send_json(
     *,
     headers: dict[str, str] | None = None,
 ) -> None:
-    body = json.dumps(data, default=str).encode("utf-8")
-    hdrs = [(b"content-type", b"application/json; charset=utf-8")]
+    body = b"" if status == 204 else json.dumps(data, default=str).encode("utf-8")
+    hdrs = (
+        [] if status == 204 else [(b"content-type", b"application/json; charset=utf-8")]
+    )
     if headers:
         hdrs.extend((k.lower().encode(), v.encode()) for k, v in headers.items())
     await send(

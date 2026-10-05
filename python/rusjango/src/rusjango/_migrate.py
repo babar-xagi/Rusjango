@@ -17,8 +17,9 @@ def _load_models(project_root: Path, installed_apps: list[str]) -> None:
     for dotted in installed_apps:
         try:
             importlib.import_module(f"{dotted}.models")
-        except ModuleNotFoundError:
-            pass
+        except ModuleNotFoundError as exc:
+            if exc.name != f"{dotted}.models":
+                raise
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -41,8 +42,10 @@ def main(argv: list[str] | None = None) -> None:
     import asyncio
 
     async def run() -> None:
-        await init_db()
-        await close_db()
+        try:
+            await init_db()
+        finally:
+            await close_db()
 
     asyncio.run(run())
     print("Migrations applied (tables created/verified).")

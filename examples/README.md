@@ -1,27 +1,23 @@
-# Examples
+# Example application
 
-Run the sample app from **`hello/`**, not from this `examples/` folder.
+Applies to Rusjango 0.1.4 (alpha).
 
-```powershell
-cd hello
-uv sync
-uv run python -m rusjango._dev
+Run the bundled school API from `examples/hello`. From the repository root in WSL2:
+
+```bash
+uv sync --all-packages --all-extras
+cd examples/hello
+uv run python -m rusjango migrate
+uv run python -m rusjango dev
 ```
 
-Or from anywhere in the repo:
+Visit `http://127.0.0.1:8000/api/school/students`. Create a student with:
 
-```powershell
-uv run --project examples/hello python -m rusjango._dev
+```bash
+curl -X POST http://127.0.0.1:8000/api/school/students \
+  -H 'Content-Type: application/json' -d '{"name":"Ali"}'
 ```
 
-From the monorepo root (after `uv sync` and `maturin develop`):
+The optional age defaults to null. Invalid schema types return 422. Run `migrate` before requests that use the database; startup does not create tables.
 
-```powershell
-uv sync
-cd python/rusjango
-uv run maturin develop
-cd ../../examples/hello
-uv run python -m rusjango._dev
-```
-
-If you see `No module named 'rusjango'`, you ran `uv sync` in the wrong directory and dropped the package from the venv. Use `cd hello` and `uv sync` again.
+The example uses the workspace package, so it exercises this checkout. Keep commands in one OS environment: WSL virtual environments cannot be reused by Windows Python. See [getting started](../docs/02-getting-started.md) for setup and generated-project instructions.

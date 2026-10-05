@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from typing import Any, get_type_hints
 from urllib.parse import parse_qs
 
-from rusjango.schema import Schema
+from rusjango.exceptions import HTTPException
+from rusjango.schema import Schema, SchemaValidationError, validate_value
 
 _PATH_PARAM = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
@@ -23,14 +24,24 @@ class Route:
     param_names: tuple[str, ...]
 
 
-def compile_route(method: str, pattern: str, handler: Callable[..., Awaitable[Any]]) -> Route:
+def compile_route(
+    method: str, pattern: str, handler: Callable[..., Awaitable[Any]]
+) -> Route:
     param_names: list[str] = []
 
-    def repl(match: re.Match[str]) -> str:
-        param_names.append(match.group(1))
-        return r"(?P<" + match.group(1) + r">[^/]+)"
-
-    regex_pattern = "^" + _PATH_PARAM.sub(repl, pattern) + "$"
+    parts: list[str] = []
+    position = 0
+    for match in _PATH_PARAM.finditer(pattern):
+        name = match.group(1)
+        if name in param_names:
+            raise ValueError(f"Duplicate path parameter: {name}")
+        param_names.append(name)
+        parts.extend(
+            [re.escape(pattern[position : match.start()]), f"(?P<{name}>[^/]+)"]
+        )
+        position = match.end()
+    parts.append(re.escape(pattern[position:]))
+    regex_pattern = "^" + "".join(parts) + "$"
     return Route(
         method=method.upper(),
         pattern=pattern,
@@ -53,7 +64,12 @@ def coerce_param(value: str, annotation: Any) -> Any:
     if annotation is float:
         return float(value)
     if annotation is bool:
-        return value.lower() in ("1", "true", "yes", "on")
+        lowered = value.lower()
+        if lowered in ("1", "true", "yes", "on"):
+            return True
+        if lowered in ("0", "false", "no", "off"):
+            return False
+        raise ValueError("Expected boolean")
     return value
 
 
@@ -67,31 +83,64 @@ async def call_handler(
     sig = inspect.signature(route.handler)
     kwargs: dict[str, Any] = {}
 
-    for name, param in sig.parameters.items():
-        if name in path_params:
-            kwargs[name] = coerce_param(path_params[name], hints.get(name, str))
-        elif name in query_params:
-            kwargs[name] = coerce_param(query_params[name], hints.get(name, str))
+    for name in sig.parameters:
+        ann = hints.get(name, str)
+        is_body = isinstance(ann, type) and (issubclass(ann, Schema) or ann is dict)
+        source = "path" if name in path_params else "query"
+        values = path_params if source == "path" else query_params
+        if name in values and not is_body:
+            try:
+                kwargs[name] = coerce_param(values[name], ann)
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(
+                    422,
+                    detail=[
+                        {
+                            "loc": [source, name],
+                            "msg": f"Invalid {getattr(ann, '__name__', ann)}",
+                        }
+                    ],
+                ) from exc
 
-    if body is not None:
-        remaining = [p for p in sig.parameters if p not in kwargs]
-        if len(remaining) == 1:
-            pname = remaining[0]
-            ann = hints.get(pname)
-            if isinstance(body, dict) and ann is not None:
-                if isinstance(ann, type) and issubclass(ann, Schema):
-                    kwargs[pname] = ann.from_dict(body)
-                else:
-                    kwargs[pname] = body
-            else:
-                kwargs[pname] = body
+    remaining = [name for name in sig.parameters if name not in kwargs]
+    body_params = [
+        name
+        for name in remaining
+        if isinstance(hints.get(name), type)
+        and (issubclass(hints[name], Schema) or hints[name] is dict)
+    ]
+    try:
+        if len(body_params) == 1:
+            name = body_params[0]
+            ann = hints[name]
+            if (
+                body is not None
+                or sig.parameters[name].default is inspect.Parameter.empty
+            ):
+                kwargs[name] = validate_value(body, ann, ["body", name])
+        elif body is not None and len(remaining) == 1:
+            name = remaining[0]
+            kwargs[name] = validate_value(body, hints.get(name, Any), ["body", name])
         elif isinstance(body, dict):
-            for key, value in body.items():
-                if key in sig.parameters and key not in kwargs:
-                    ann = hints.get(key)
-                    if isinstance(ann, type) and issubclass(ann, Schema):
-                        kwargs[key] = ann.from_dict(body)
-                    else:
-                        kwargs[key] = value
+            for name in remaining:
+                if name in body:
+                    kwargs[name] = validate_value(
+                        body[name], hints.get(name, Any), ["body", name]
+                    )
+    except SchemaValidationError as exc:
+        raise HTTPException(422, detail=exc.errors) from exc
+
+    missing = [
+        name
+        for name, param in sig.parameters.items()
+        if name not in kwargs and param.default is inspect.Parameter.empty
+    ]
+    if missing:
+        raise HTTPException(
+            422,
+            detail=[
+                {"loc": ["query", name], "msg": "Field is required"} for name in missing
+            ],
+        )
 
     return await route.handler(**kwargs)

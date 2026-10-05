@@ -1,4 +1,4 @@
-use crate::project::find_project_root;
+use crate::project::{find_project_root, settings_path};
 use crate::settings::{remove_installed_app, remove_main_loads_apps};
 use anyhow::{bail, Result};
 use std::fs;
@@ -11,6 +11,9 @@ pub fn run(name: &str, yes: bool) -> Result<()> {
     let root = find_project_root(Path::new("."))?;
     let app_dir = root.join("apps").join(name);
     let module = format!("apps.{name}");
+    if root.join("apps").is_symlink() || app_dir.is_symlink() {
+        bail!("Refusing to remove a symlinked app");
+    }
 
     if !app_dir.is_dir() {
         bail!("App directory not found: {}", app_dir.display());
@@ -29,7 +32,7 @@ pub fn run(name: &str, yes: bool) -> Result<()> {
         }
     }
 
-    let settings_path = root.join("settings.py");
+    let settings_path = settings_path(&root)?;
     remove_installed_app(&settings_path, &module)?;
 
     fs::remove_dir_all(&app_dir)?;

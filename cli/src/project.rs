@@ -2,9 +2,21 @@ use anyhow::{bail, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Directory containing `project/` and `app/` templates (monorepo layout).
-pub fn templates_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../templates")
+/// Templates travel with the installed binary, independent of the checkout.
+pub const APP_API: &str = include_str!("../../templates/app/api.py.tpl");
+
+pub fn template(name: &str) -> Result<&'static str> {
+    Ok(match name {
+        "project/main.py" => include_str!("../../templates/project/main.py.tpl"),
+        "project/settings.py" => include_str!("../../templates/project/settings.py.tpl"),
+        "project/pyproject.toml" => include_str!("../../templates/project/pyproject.toml.tpl"),
+        "app/__init__.py" => include_str!("../../templates/app/__init__.py.tpl"),
+        "app/api.py" => APP_API,
+        "orm/models.py" => include_str!("../../templates/orm/models.py.tpl"),
+        "orm/schemas.py" => include_str!("../../templates/orm/schemas.py.tpl"),
+        "orm/api_with_orm.py" => include_str!("../../templates/orm/api_with_orm.py.tpl"),
+        _ => bail!("Unknown template: {name}"),
+    })
 }
 
 pub fn find_project_root(start: &Path) -> Result<PathBuf> {
@@ -22,7 +34,22 @@ pub fn find_project_root(start: &Path) -> Result<PathBuf> {
 
 fn has_rusjango_tool(pyproject: &Path) -> Result<bool> {
     let content = fs::read_to_string(pyproject)?;
-    Ok(content.contains("[tool.rusjango]"))
+    let config: toml::Value = toml::from_str(&content)?;
+    Ok(config
+        .get("tool")
+        .and_then(|tool| tool.get("rusjango"))
+        .is_some())
+}
+
+pub fn settings_path(root: &Path) -> Result<PathBuf> {
+    let config: toml::Value = toml::from_str(&fs::read_to_string(root.join("pyproject.toml"))?)?;
+    let name = config
+        .get("tool")
+        .and_then(|tool| tool.get("rusjango"))
+        .and_then(|config| config.get("settings"))
+        .and_then(|name| name.as_str())
+        .unwrap_or("settings.py");
+    Ok(root.join(name))
 }
 
 pub fn validate_project_name(name: &str) -> Result<()> {
@@ -45,32 +72,24 @@ pub fn render_template(content: &str, project_name: &str, secret_key: &str) -> S
         .replace("{{ secret_key }}", secret_key)
 }
 
-pub fn copy_template_tree(
-    src: &Path,
+pub fn write_templates(
+    group: &str,
     dst: &Path,
     project_name: &str,
     secret_key: &str,
 ) -> Result<()> {
     fs::create_dir_all(dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let name = entry.file_name();
-        let name_str = name.to_string_lossy();
-        let src_path = entry.path();
-        let is_tpl = name_str.ends_with(".tpl");
-        let out_name = if is_tpl {
-            name_str.trim_end_matches(".tpl").to_string()
-        } else {
-            name_str.to_string()
-        };
-        let dst_path = dst.join(&out_name);
-        if src_path.is_dir() {
-            copy_template_tree(&src_path, &dst_path, project_name, secret_key)?;
-        } else {
-            let raw = fs::read_to_string(&src_path)?;
-            let rendered = render_template(&raw, project_name, secret_key);
-            fs::write(&dst_path, rendered)?;
-        }
+    let files: &[&str] = match group {
+        "project" => &["main.py", "settings.py", "pyproject.toml"],
+        "app" => &["__init__.py", "api.py"],
+        _ => bail!("Unknown template group: {group}"),
+    };
+    for name in files {
+        let raw = template(&format!("{group}/{name}"))?;
+        fs::write(
+            dst.join(name),
+            render_template(raw, project_name, secret_key),
+        )?;
     }
     Ok(())
 }
@@ -86,4 +105,16 @@ pub fn generate_secret_key() -> String {
             CHARSET[idx] as char
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn embedded_templates_render_without_checkout() {
+        let rendered = render_template(template("project/settings.py").unwrap(), "demo", "secret");
+        assert!(rendered.contains("APP_NAME = \"demo\""));
+        assert!(!rendered.contains("{{"));
+    }
 }

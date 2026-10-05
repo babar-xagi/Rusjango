@@ -26,6 +26,7 @@ class Rusjango:
         self.settings_path = settings
         self.settings: dict[str, Any] = load_settings(settings) if settings else {}
         self._routes: list[Route] = []
+        self._loaded_apps: set[str] = set()
         self._asgi_app: ASGIApp | None = None
         if self.settings.get("DATABASE"):
             from rusjango.orm.connection import configure_db
@@ -84,29 +85,36 @@ class Rusjango:
         async def core(scope: dict[str, Any], receive: Any, send: Any) -> None:
             if scope["type"] != "http":
                 return
-            scope.setdefault("rusjango", {})["settings"] = self.settings
             method = scope["method"]
             path = scope["path"]
             query = parse_query_string(scope.get("query_string", b""))
 
             route = self._match(method, path)
             if route is None:
+                allowed = sorted(
+                    {r.method for r in self._routes if r.regex.fullmatch(path)}
+                )
                 await send_error(
                     send,
-                    HTTPException(404, detail=f"No route for {method} {path}"),
+                    HTTPException(
+                        405,
+                        detail="Method not allowed",
+                        headers={"Allow": ", ".join(allowed)},
+                    )
+                    if allowed
+                    else HTTPException(404, detail=f"No route for {method} {path}"),
                 )
                 return
-
-            body_data = None
-            if method in ("POST", "PUT", "PATCH"):
-                raw = await read_body(receive)
-                body_data = parse_json_body(raw)
 
             match = route.regex.match(path)
             assert match is not None
             path_params = {n: match.group(n) for n in route.param_names}
 
             try:
+                body_data = None
+                if method in ("POST", "PUT", "PATCH"):
+                    raw = await read_body(receive)
+                    body_data = parse_json_body(raw)
                 result = await call_handler(route, path_params, query, body_data)
             except HTTPException as exc:
                 await send_error(send, exc)
@@ -145,16 +153,47 @@ class Rusjango:
 
     def _match(self, method: str, path: str) -> Route | None:
         for route in self._routes:
-            if route.method == method.upper() and route.regex.match(path):
+            if route.method == method.upper() and route.regex.fullmatch(path):
                 return route
         return None
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        scope.setdefault("rusjango", {})["settings"] = self.settings
+        if scope["type"] == "lifespan":
+            await self._lifespan(receive, send)
+            return
+        if scope["type"] == "websocket":
+            await send({"type": "websocket.close", "code": 1000})
+            return
         app = self._build_asgi()
         try:
             await app(scope, receive, send)
         except HTTPException as exc:
             await send_error(send, exc)
+
+    async def _lifespan(self, receive: Any, send: Any) -> None:
+        from rusjango.orm.connection import close_db, configure_db
+
+        while True:
+            message = await receive()
+            if message["type"] == "lifespan.startup":
+                try:
+                    configure_db(self.settings.get("DATABASE"))
+                except Exception as exc:
+                    await send({"type": "lifespan.startup.failed", "message": str(exc)})
+                    return
+                await send({"type": "lifespan.startup.complete"})
+            elif message["type"] == "lifespan.shutdown":
+                try:
+                    if self.settings.get("DATABASE"):
+                        await close_db()
+                except Exception as exc:
+                    await send(
+                        {"type": "lifespan.shutdown.failed", "message": str(exc)}
+                    )
+                    return
+                await send({"type": "lifespan.shutdown.complete"})
+                return
 
     @property
     def route_count(self) -> int:

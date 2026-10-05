@@ -7,6 +7,31 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.4] - 2026-10-05
+
+### Fixed
+
+- Literal route matching, missing/invalid input errors, 405 `Allow` headers, and empty 204 responses.
+- Production host validation, security headers on rejected requests, and ASGI lifespan cleanup.
+- Independent model table names, concurrent SQLite insert results, null filters, and affected-row counts.
+- PostgreSQL generated keys, update parameter numbering, and pooled connection release after failures.
+- Python and Rust scaffolding preserve custom APIs and unrelated settings, honor configured settings paths, and propagate migration failures.
+- Rust templates are embedded in the binary; native and Python versions are aligned at 0.1.4.
+- Python 3.11+ package metadata and builds from the source distribution.
+
+### Added
+
+- Strict schema validation with defaults, optional types, nested schemas, lists, and dictionaries.
+- Regression tests, both-CLI integration tests, real SQLite/PostgreSQL checks, and an installed-wheel smoke test.
+- CI integration gates before release builds, clearer setup guides, and an evidence-based phase tracker.
+
+### Compatibility
+
+- Invalid schema types now return 422 instead of reaching handlers unchecked; JSON strings are not coerced to numbers.
+- SQLite requires 3.35+ for `INSERT ... RETURNING`.
+- Old databases affected by the `model` table-name bug need an explicit data migration. Corrected names do not move existing rows automatically.
+- The Rust runtime remains a placeholder. Auth, admin, tracked migrations, and performance claims remain outside the implemented scope.
+
 ## [0.1.0] — 2025-05-27
 
 First public release. Phases 1–3 complete.
@@ -61,3 +86,5 @@ First public release. Phases 1–3 complete.
 - PostgreSQL requires the optional `asyncpg` dependency: `uv add rusjango[postgres]`
 
 [0.1.0]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.0
+
+[0.1.4]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.4

@@ -22,7 +22,7 @@ def import_string(path: str) -> Any:
 
 
 def build_middleware_stack(app: ASGIApp, middleware_paths: list[str]) -> ASGIApp:
-    """Wrap *app* with middleware (last listed = outermost, Django-style)."""
+    """Wrap *app* with middleware; first listed sees requests first."""
     stack = app
     for path in reversed(middleware_paths):
         middleware_cls = import_string(path)

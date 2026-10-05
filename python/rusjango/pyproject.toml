@@ -4,11 +4,11 @@ build-backend = "maturin"
 
 [project]
 name = "rusjango"
-version = "0.1.3"
+version = "0.1.4"
 description = "Rust-powered async Python web framework — start minimal, grow with rusjango add"
-readme = "README.md"
+readme = "../../README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = { file = "../../LICENSE" }
 authors = [{ name = "Rusjango Contributors" }]
 keywords = [
     "web",
@@ -63,7 +63,6 @@ rusjango = "rusjango.__main__:main"
 manifest-path = "../../crates/rusjango-core/Cargo.toml"
 module-name   = "rusjango._core"
 python-source = "src"
-features      = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

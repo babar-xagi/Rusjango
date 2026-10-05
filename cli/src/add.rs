@@ -1,4 +1,4 @@
-use crate::project::{copy_template_tree, find_project_root, templates_dir};
+use crate::project::{find_project_root, settings_path, write_templates};
 use crate::settings::{add_installed_app, ensure_main_loads_apps};
 use anyhow::{bail, Result};
 use std::fs;
@@ -35,21 +35,23 @@ pub fn run(name: &str) -> Result<()> {
         bail!("App already exists: {}", app_dir.display());
     }
 
-    let template_root = templates_dir().join("app");
-    if !template_root.is_dir() {
-        bail!("App templates not found at {}", template_root.display());
-    }
+    let settings_path = settings_path(&root)?;
+    let content = fs::read_to_string(&settings_path)?;
+    crate::settings::installed_apps(&content)?;
+    let orm_enabled = crate::settings::database_enabled(&content)?;
 
     fs::create_dir_all(&apps_root)?;
     let apps_init = apps_root.join("__init__.py");
     if !apps_init.exists() {
         fs::write(&apps_init, "# Rusjango applications\n")?;
     }
-    copy_template_tree(&template_root, &app_dir, name, "")?;
+    write_templates("app", &app_dir, name, "")?;
 
     let module = format!("apps.{name}");
-    let settings_path = root.join("settings.py");
     add_installed_app(&settings_path, &module)?;
+    if orm_enabled {
+        crate::orm::scaffold_app(&app_dir, name)?;
+    }
 
     let main_path = root.join("main.py");
     if main_path.is_file() {

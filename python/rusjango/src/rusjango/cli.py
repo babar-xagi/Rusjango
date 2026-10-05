@@ -1,13 +1,14 @@
 """Full Rusjango CLI — works out of the box after `pip install rusjango`.
 
 All commands are implemented in pure Python so users never need the
-separate Rust binary.  The Rust binary (cli/) is faster and used in
-development, but both expose the same surface.
+separate Rust binary. The Rust binary (cli/) is also available for
+development; both expose the same commands.
 """
 
 from __future__ import annotations
 
 import argparse
+import ast
 import os
 import re
 import secrets
@@ -17,6 +18,8 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+from rusjango.config import find_project_root, load_rusjango_config
 
 # ── Embedded templates ────────────────────────────────────────────────────────
 
@@ -58,6 +61,7 @@ _PYPROJECT_TOML = """\
 [project]
 name = "{name}"
 version = "0.1.0"
+requires-python = ">=3.11"
 dependencies = [
     "rusjango",
 ]
@@ -117,13 +121,13 @@ from rusjango.schema import Schema
 
 class StudentCreate(Schema):
     name: str
-    age: int
+    age: int | None = None
 
 
 class StudentOut(Schema):
     id: int
     name: str
-    age: int
+    age: int | None
 """
 
 _DATABASE_BLOCK = """\
@@ -142,64 +146,80 @@ def _generate_secret_key() -> str:
 
 
 def _find_project_root(start: Path | None = None) -> Path:
-    current = (start or Path.cwd()).resolve()
-    for directory in [current, *current.parents]:
-        pyproject = directory / "pyproject.toml"
-        if pyproject.is_file() and "[tool.rusjango]" in pyproject.read_text(
-            encoding="utf-8"
-        ):
-            return directory
-    raise FileNotFoundError(
-        "No Rusjango project found. "
-        "Run this command from inside a project directory "
-        "(pyproject.toml must contain [tool.rusjango])."
-    )
+    return find_project_root(start)
 
 
 def _load_rusjango_config(root: Path) -> dict[str, Any]:
-    import tomllib
-
-    with (root / "pyproject.toml").open("rb") as f:
-        data = tomllib.load(f)
-    return data.get("tool", {}).get("rusjango", {})
+    return load_rusjango_config(root)
 
 
 def _add_installed_app(settings_path: Path, module: str) -> None:
     content = settings_path.read_text(encoding="utf-8")
-    if f'"{module}"' in content:
-        return  # already registered
-    # Case 1: INSTALLED_APPS = []  (empty, single line)
-    if re.search(r"(?m)^INSTALLED_APPS\s*=\s*\[\s*\]\s*$", content):
-        content = re.sub(
-            r"(?m)^(INSTALLED_APPS\s*=\s*)\[\s*\]\s*$",
-            f'\\1[\n    "{module}",\n]',
-            content,
+    apps = _literal_setting(content, "INSTALLED_APPS")
+    if not isinstance(apps, list) or not all(isinstance(item, str) for item in apps):
+        raise ValueError("INSTALLED_APPS must be a literal list of strings")
+    if module not in apps:
+        apps.append(module)
+        rendered = "[\n" + "".join(f"    {item!r},\n" for item in apps) + "]"
+        settings_path.write_text(
+            _replace_setting(content, "INSTALLED_APPS", rendered), encoding="utf-8"
         )
-    # Case 2: INSTALLED_APPS = [\n  ...\n]  (multi-line)
-    elif re.search(r"(?ms)^INSTALLED_APPS\s*=\s*\[.*?\n\]", content):
-        content = re.sub(
-            r"(?ms)^(INSTALLED_APPS\s*=\s*\[)(.*?)(\n\])",
-            lambda m: m.group(1) + m.group(2) + f'    "{module}",\n' + m.group(3),
-            content,
-        )
-    else:
-        msg = f"Could not find INSTALLED_APPS in {settings_path}"
-        raise ValueError(msg)
-    settings_path.write_text(content, encoding="utf-8")
 
 
 def _remove_installed_app(settings_path: Path, module: str) -> None:
     content = settings_path.read_text(encoding="utf-8")
-    if f'"{module}"' not in content:
+    apps = _literal_setting(content, "INSTALLED_APPS")
+    if not isinstance(apps, list) or module not in apps:
         raise ValueError(f"App {module!r} not found in INSTALLED_APPS")
-    content = re.sub(rf'(?m)^\s*"{re.escape(module)}",?\s*\n', "", content)
-    # Collapse back to [] if now empty
-    content = re.sub(
-        r"(?m)^INSTALLED_APPS\s*=\s*\[\s*\n\s*\]",
-        "INSTALLED_APPS = []",
-        content,
+    apps = [item for item in apps if item != module]
+    rendered = (
+        "[\n" + "".join(f"    {item!r},\n" for item in apps) + "]" if apps else "[]"
     )
-    settings_path.write_text(content, encoding="utf-8")
+    settings_path.write_text(
+        _replace_setting(content, "INSTALLED_APPS", rendered), encoding="utf-8"
+    )
+
+
+def _setting_node(content: str, name: str) -> ast.expr:
+    matches = [
+        node.value
+        for node in ast.parse(content).body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == name
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"Expected one top-level {name} assignment")
+    return matches[0]
+
+
+def _literal_setting(content: str, name: str) -> Any:
+    try:
+        return ast.literal_eval(_setting_node(content, name))
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"{name} must use a literal value for CLI editing") from exc
+
+
+def _replace_setting(content: str, name: str, value: str) -> str:
+    node = _setting_node(content, name)
+    lines = content.splitlines(keepends=True)
+    start = sum(len(line) for line in lines[: node.lineno - 1])
+    start += len(lines[node.lineno - 1].encode()[: node.col_offset].decode())
+    end = sum(len(line) for line in lines[: node.end_lineno - 1])
+    end += len(lines[node.end_lineno - 1].encode()[: node.end_col_offset].decode())
+    return content[:start] + value + content[end:]
+
+
+def _project_settings(root: Path) -> Path:
+    return root / _load_rusjango_config(root).get("settings", "settings.py")
+
+
+def _database_setting(content: str) -> dict[str, Any] | None:
+    value = _literal_setting(content, "DATABASE")
+    if value is not None and not isinstance(value, dict):
+        raise ValueError("DATABASE must be None or a literal dictionary")
+    return value
 
 
 def _ensure_load_apps(main_path: Path) -> None:
@@ -214,7 +234,36 @@ def _ensure_load_apps(main_path: Path) -> None:
 
 def _list_installed_apps(settings_path: Path) -> list[str]:
     content = settings_path.read_text(encoding="utf-8")
-    return re.findall(r'"apps\.([a-zA-Z0-9_]+)"', content)
+    apps = _literal_setting(content, "INSTALLED_APPS")
+    if not isinstance(apps, list) or not all(isinstance(item, str) for item in apps):
+        raise ValueError("INSTALLED_APPS must be a literal list of strings")
+    return [
+        module.removeprefix("apps.")
+        for module in apps
+        if isinstance(module, str)
+        and re.fullmatch(r"apps\.[a-zA-Z_][a-zA-Z0-9_]*", module)
+    ]
+
+
+def _scaffold_orm_app(app_dir: Path) -> None:
+    for filename, template in [("models.py", _MODELS_PY), ("schemas.py", _SCHEMAS_PY)]:
+        path = app_dir / filename
+        if not path.exists():
+            path.write_text(template, encoding="utf-8")
+    api_path = app_dir / "api.py"
+    if (
+        api_path.exists()
+        and api_path.read_text(encoding="utf-8").strip() == _APP_API.strip()
+    ):
+        api_path.write_text(_APP_API_ORM, encoding="utf-8")
+
+
+def _validate_app_name(name: str) -> None:
+    if not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", name) or name in (
+        "apps",
+        "rusjango",
+    ):
+        raise ValueError(f"Invalid or reserved app name: {name!r}")
 
 
 def _confirm(prompt: str) -> bool:
@@ -229,7 +278,7 @@ def _confirm(prompt: str) -> bool:
 
 def _cmd_new(args: argparse.Namespace) -> None:
     name: str = args.name
-    if not re.match(r"^[a-zA-Z0-9_-]+$", name):
+    if not re.fullmatch(r"[a-zA-Z0-9_-]+", name):
         sys.exit(
             f"Error: invalid project name {name!r}. Use letters, digits, hyphens, underscores."
         )
@@ -291,12 +340,7 @@ def _cmd_dev(args: argparse.Namespace) -> None:
 
 def _cmd_add_app(args: argparse.Namespace) -> None:
     name: str = args.name
-    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
-        sys.exit(
-            f"Error: invalid app name {name!r}. Must start with a letter or underscore."
-        )
-    if name in ("apps", "rusjango"):
-        sys.exit(f"Error: {name!r} is a reserved name.")
+    _validate_app_name(name)
 
     root = _find_project_root()
     apps_root = root / "apps"
@@ -304,6 +348,13 @@ def _cmd_add_app(args: argparse.Namespace) -> None:
 
     if app_dir.exists():
         sys.exit(f"Error: app already exists: {app_dir}")
+
+    settings_path = _project_settings(root)
+    content = settings_path.read_text(encoding="utf-8")
+    apps = _literal_setting(content, "INSTALLED_APPS")
+    database = _database_setting(content)
+    if not isinstance(apps, list) or not all(isinstance(item, str) for item in apps):
+        raise ValueError("INSTALLED_APPS must be a literal list of strings")
 
     apps_root.mkdir(exist_ok=True)
     if not (apps_root / "__init__.py").exists():
@@ -316,7 +367,9 @@ def _cmd_add_app(args: argparse.Namespace) -> None:
     (app_dir / "api.py").write_text(_APP_API, encoding="utf-8")
 
     module = f"apps.{name}"
-    _add_installed_app(root / "settings.py", module)
+    _add_installed_app(settings_path, module)
+    if database:
+        _scaffold_orm_app(app_dir)
 
     main_path = root / "main.py"
     if main_path.is_file():
@@ -330,9 +383,16 @@ def _cmd_add_app(args: argparse.Namespace) -> None:
 
 def _cmd_remove_app(args: argparse.Namespace) -> None:
     name: str = args.name
+    _validate_app_name(name)
     root = _find_project_root()
     app_dir = root / "apps" / name
     module = f"apps.{name}"
+    if (
+        (root / "apps").is_symlink()
+        or app_dir.is_symlink()
+        or app_dir.resolve().parent != (root / "apps").resolve()
+    ):
+        raise ValueError("Refusing to remove an app outside the apps directory")
 
     if not app_dir.is_dir():
         sys.exit(f"Error: app directory not found: {app_dir}")
@@ -343,7 +403,7 @@ def _cmd_remove_app(args: argparse.Namespace) -> None:
             print("Aborted.")
             return
 
-    _remove_installed_app(root / "settings.py", module)
+    _remove_installed_app(_project_settings(root), module)
     shutil.rmtree(app_dir)
 
     print(f"Removed app '{name}'")
@@ -353,19 +413,15 @@ def _cmd_remove_app(args: argparse.Namespace) -> None:
 
 def _cmd_add_orm(args: argparse.Namespace) -> None:  # noqa: ARG001
     root = _find_project_root()
-    settings_path = root / "settings.py"
+    settings_path = _project_settings(root)
     content = settings_path.read_text(encoding="utf-8")
+    apps = _list_installed_apps(settings_path)
 
-    if "DATABASE = {" in content and "DATABASE = None" not in content:
-        print("ORM already enabled (DATABASE is configured).")
-        return
-
-    if "DATABASE = None" not in content:
-        sys.exit("Error: could not find DATABASE = None in settings.py")
-
-    settings_path.write_text(
-        content.replace("DATABASE = None", _DATABASE_BLOCK), encoding="utf-8"
-    )
+    if _database_setting(content) is None:
+        settings_path.write_text(
+            _replace_setting(content, "DATABASE", _DATABASE_BLOCK.partition("= ")[2]),
+            encoding="utf-8",
+        )
 
     # migrations/
     migrations = root / "migrations"
@@ -374,37 +430,18 @@ def _cmd_add_orm(args: argparse.Namespace) -> None:  # noqa: ARG001
     if not gitkeep.exists():
         gitkeep.write_text("", encoding="utf-8")
 
-    # Add aiosqlite dependency
-    pyproject_path = root / "pyproject.toml"
-    pp = pyproject_path.read_text(encoding="utf-8")
-    if "aiosqlite" not in pp:
-        pp = re.sub(
-            r"(?m)^dependencies = \[",
-            'dependencies = [\n    "aiosqlite>=0.20",',
-            pp,
-        )
-        pyproject_path.write_text(pp, encoding="utf-8")
-
     # Add models.py / schemas.py to existing apps
-    settings_path2 = root / "settings.py"
-    for app_name in _list_installed_apps(settings_path2):
+    for app_name in apps:
         app_dir = root / "apps" / app_name
         if not app_dir.is_dir():
             continue
-        if not (app_dir / "models.py").exists():
-            (app_dir / "models.py").write_text(_MODELS_PY, encoding="utf-8")
-        if not (app_dir / "schemas.py").exists():
-            (app_dir / "schemas.py").write_text(_SCHEMAS_PY, encoding="utf-8")
-        api_path = app_dir / "api.py"
-        if api_path.exists():
-            if "from .models import" not in api_path.read_text(encoding="utf-8"):
-                api_path.write_text(_APP_API_ORM, encoding="utf-8")
+        _scaffold_orm_app(app_dir)
 
     print("ORM enabled.")
     print("  DATABASE configured (SQLite: db.sqlite3)")
     print("  migrations/ created")
     print("  models.py / schemas.py added to apps (where missing)")
-    print("  api.py upgraded with ORM routes (where not already done)")
+    print("  Untouched starter APIs upgraded; custom APIs preserved")
     print()
     print("Next steps:")
     print("  rusjango migrate   — create tables")
@@ -413,10 +450,10 @@ def _cmd_add_orm(args: argparse.Namespace) -> None:  # noqa: ARG001
 
 def _cmd_remove_orm(args: argparse.Namespace) -> None:
     root = _find_project_root()
-    settings_path = root / "settings.py"
+    settings_path = _project_settings(root)
     content = settings_path.read_text(encoding="utf-8")
 
-    if "DATABASE = {" not in content:
+    if _database_setting(content) is None:
         print("ORM is not enabled (DATABASE is None).")
         return
 
@@ -427,7 +464,7 @@ def _cmd_remove_orm(args: argparse.Namespace) -> None:
             print("Aborted.")
             return
 
-    new_content = re.sub(r"(?ms)^DATABASE = \{.*?\}\s*$", "DATABASE = None", content)
+    new_content = _replace_setting(content, "DATABASE", "None")
     settings_path.write_text(new_content, encoding="utf-8")
     print("ORM disabled (DATABASE = None).")
 
@@ -437,7 +474,12 @@ def _cmd_migrate(args: argparse.Namespace) -> None:  # noqa: ARG001
     result = subprocess.run(
         [sys.executable, "-m", "rusjango._migrate"],
         cwd=root,
-        env={**os.environ, "PYTHONPATH": str(root)},
+        env={
+            **os.environ,
+            "PYTHONPATH": os.pathsep.join(
+                [str(root), os.environ.get("PYTHONPATH", "")]
+            ),
+        },
     )
     sys.exit(result.returncode)
 
@@ -526,7 +568,10 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
-    args.func(args)
+    try:
+        args.func(args)
+    except (ValueError, OSError, SyntaxError) as exc:
+        parser.exit(1, f"Error: {exc}\n")
 
 
 if __name__ == "__main__":

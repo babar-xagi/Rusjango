@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import copy
 from typing import Any, ClassVar
 
 from rusjango.orm import connection
@@ -13,8 +14,17 @@ _MODEL_REGISTRY: list[type[Model]] = []
 
 
 class ModelMeta(type):
-    def __new__(mcs, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
+    def __new__(
+        mcs, name: str, bases: tuple[type, ...], namespace: dict[str, Any]
+    ) -> type:
         fields: dict[str, Field] = {}
+        for base in bases:
+            fields.update(
+                {
+                    key: copy(value)
+                    for key, value in getattr(base, "_fields", {}).items()
+                }
+            )
         for key, value in list(namespace.items()):
             if isinstance(value, Field):
                 value.name = key
@@ -22,9 +32,15 @@ class ModelMeta(type):
                 namespace.pop(key, None)
         cls = super().__new__(mcs, name, bases, namespace)
         cls._fields = fields
-        if not getattr(cls, "_table", None):
+        if not namespace.get("_table"):
             cls._table = _default_table_name(cls)
-        if name != "Model" and cls not in _MODEL_REGISTRY:
+        if sum(field.primary_key for field in fields.values()) > 1:
+            raise ValueError("Models support one primary key")
+        if (
+            name != "Model"
+            and not namespace.get("_abstract", False)
+            and cls not in _MODEL_REGISTRY
+        ):
             _MODEL_REGISTRY.append(cls)
         return cls
 
@@ -35,13 +51,6 @@ def _default_table_name(cls: type) -> str:
     if len(parts) >= 2 and parts[0] == "apps":
         return f"{parts[1]}_{cls.__name__.lower()}"
     return cls.__name__.lower()
-
-
-def _pk_field(cls: type[Model]) -> Field | None:
-    for field in cls._fields.values():
-        if field.primary_key:
-            return field
-    return None
 
 
 class Model(metaclass=ModelMeta):
@@ -97,13 +106,17 @@ class Model(metaclass=ModelMeta):
     @classmethod
     async def create(cls, **kwargs: Any) -> Model:
         row_data: dict[str, Any] = {}
-        pk = _pk_field(cls)
+        unknown = kwargs.keys() - cls._fields.keys()
+        if unknown:
+            raise ValueError(f"Unknown fields: {', '.join(sorted(unknown))}")
 
         for name, field in cls._fields.items():
             if name in kwargs:
                 row_data[name] = kwargs[name]
             elif field.default is not None:
-                row_data[name] = field.default
+                row_data[name] = (
+                    field.default() if callable(field.default) else field.default
+                )
             elif field.primary_key:
                 continue
             elif field.nullable:
@@ -112,19 +125,8 @@ class Model(metaclass=ModelMeta):
                 msg = f"Missing required field: {name}"
                 raise ValueError(msg)
 
-        if row_data:
-            query, params = sqlgen.insert_sql(cls._table, row_data)
-            await connection.execute(query, params)
-        elif pk and connection.engine_name() == "sqlite":
-            await connection.execute(
-                f'INSERT INTO {sqlgen.quote_ident(cls._table, "sqlite")} DEFAULT VALUES',
-            )
-
-        if pk and pk.name not in row_data:
-            if connection.engine_name() == "sqlite":
-                result = await connection.fetchone("SELECT last_insert_rowid() AS id", ())
-                if result:
-                    row_data[pk.name] = result["id"]
-
-        instance_data = {name: row_data.get(name, kwargs.get(name)) for name in cls._fields}
-        return cls(**instance_data)
+        query, params = sqlgen.insert_sql(
+            cls._table, row_data, returning=list(cls._fields)
+        )
+        row = await connection.insert(query, params)
+        return cls._from_row(row)

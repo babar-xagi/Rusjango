@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-
-from rusjango.exceptions import HTTPException
+from urllib.parse import urlsplit
 
 
 class SecurityMiddleware:
@@ -22,18 +21,6 @@ class SecurityMiddleware:
         debug = settings.get("DEBUG", False)
         allowed_hosts: list[str] = settings.get("ALLOWED_HOSTS") or []
 
-        if not debug and allowed_hosts:
-            host = _get_host(scope)
-            if host and not _host_allowed(host, allowed_hosts):
-                from rusjango.asgi import send_error
-                from rusjango.exceptions import HTTPException
-
-                await send_error(
-                    send,
-                    HTTPException(400, detail=f"Invalid host header: {host}"),
-                )
-                return
-
         async def send_wrapper(message: dict[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
@@ -46,14 +33,38 @@ class SecurityMiddleware:
                 message = {**message, "headers": headers}
             await send(message)
 
+        if not debug:
+            host = _get_host(scope)
+            if not host or not _host_allowed(host, allowed_hosts):
+                from rusjango.asgi import send_error
+                from rusjango.exceptions import HTTPException
+
+                await send_error(
+                    send_wrapper,
+                    HTTPException(400, detail=f"Invalid host header: {host}"),
+                )
+                return
+
         await self.app(scope, receive, send_wrapper)
 
 
 def _get_host(scope: dict[str, Any]) -> str | None:
-    for key, value in scope.get("headers", []):
-        if key == b"host":
-            return value.decode("latin-1").split(":")[0]
-    return None
+    values = [value for key, value in scope.get("headers", []) if key == b"host"]
+    if len(values) != 1:
+        return None
+    host = values[0].decode("latin-1")
+    if any(char.isspace() or char in "/\\@?#" for char in host):
+        return None
+    try:
+        parsed = urlsplit("//" + host)
+        parsed.port  # Validate port syntax and range, even when only matching the hostname.
+        if host.startswith("[") and "]" in host:
+            suffix = host[host.index("]") + 1 :]
+            if suffix and not suffix.startswith(":"):
+                return None
+        return parsed.hostname.rstrip(".") if parsed.hostname else None
+    except ValueError:
+        return None
 
 
 def _host_allowed(host: str, allowed: list[str]) -> bool:
@@ -62,6 +73,6 @@ def _host_allowed(host: str, allowed: list[str]) -> bool:
         entry = entry.lower()
         if entry == "*" or host == entry:
             return True
-        if entry.startswith(".") and host.endswith(entry):
+        if entry.startswith(".") and (host == entry[1:] or host.endswith(entry)):
             return True
     return False

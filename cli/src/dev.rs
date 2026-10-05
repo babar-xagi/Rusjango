@@ -40,7 +40,7 @@ fn try_uv(root: &Path, args: &[String]) -> Result<std::process::ExitStatus> {
 fn try_python(root: &Path, args: &[String]) -> Result<std::process::ExitStatus> {
     let python_args: Vec<&str> = args
         .iter()
-        .skip(1) // drop "run"
+        .skip(2) // drop "run" and "python"; the executable is already python
         .map(String::as_str)
         .collect();
     Command::new("python")

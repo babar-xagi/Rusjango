@@ -1,108 +1,27 @@
-# Rusjango
+# Rusjango 0.1.4
 
-**Rust-powered async Python web framework**
+An alpha async Python API framework with Django-style apps, progressive scaffolding, and a separate Rust CLI. The native extension is a placeholder and currently does not accelerate requests.
 
-*Start like Flask · Scale like Django · Perform like Rust · Build AI apps natively*
-
-[![PyPI](https://img.shields.io/pypi/v/rusjango)](https://pypi.org/project/rusjango/)
-[![Python](https://img.shields.io/pypi/pyversions/rusjango)](https://pypi.org/project/rusjango/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/babar-xagi/Rusjango/blob/main/LICENSE)
-
----
-
-## Install
+Requires Python 3.11+. Install into a virtual environment:
 
 ```bash
-uv add rusjango
-# or
-pip install rusjango
-
-# PostgreSQL support
-uv add rusjango[postgres]
+pip install rusjango==0.1.4
+# Optional PostgreSQL driver:
+pip install 'rusjango[postgres]==0.1.4'
 ```
 
-## Quick start
-
 ```bash
-rusjango new myapp
-cd myapp
+rusjango new demo
+cd demo
+uv sync
+rusjango add app school
+rusjango add orm
+rusjango migrate
 rusjango dev
 ```
 
-Open http://127.0.0.1:8000
+Implemented: async JSON routes, typed primitive parameters, strict schemas, middleware, app mounting, SQLite/PostgreSQL CRUD, and table creation. Scaffolding preserves custom APIs and unrelated settings.
 
-## What it looks like
+The ORM has no tracked migrations, transaction API, or relationships. Auth, admin, OpenAPI, workers, and Rust request acceleration remain pending. SQLite requires 3.35+; old databases affected by the `model` table-name bug need explicit data migration.
 
-```python
-# main.py
-from rusjango import Rusjango
-
-app = Rusjango(settings="settings.py")
-
-@app.get("/")
-async def home():
-    return {"message": "Hello Rusjango"}
-
-@app.get("/items/{id}")
-async def get_item(id: int):
-    return {"id": id}
-```
-
-## Progressive growth
-
-```bash
-rusjango add app school       # adds apps/school/ with its own API router
-rusjango add orm              # enables async ORM (SQLite default)
-rusjango migrate              # creates database tables
-rusjango add auth             # coming: JWT + sessions
-rusjango add admin            # coming: modern React admin panel
-rusjango remove app school    # safely removes any feature
-```
-
-## ORM
-
-```python
-from rusjango.orm import Model, Integer, String
-
-class Student(Model):
-    id   = Integer(primary_key=True)
-    name = String(max_length=100)
-    age  = Integer(nullable=True)
-
-# CRUD
-student = await Student.create(name="Ali", age=20)
-students = await Student.filter(age__gte=18).all()
-await Student.filter(id=1).update(name="Ahmed")
-await Student.filter(id=1).delete()
-```
-
-## Per-app routing
-
-```python
-# apps/school/api.py
-from rusjango import Router
-
-router = Router()   # fresh instance per app — no route cross-contamination
-
-@router.get("/students")
-async def list_students():
-    return [{"name": "Ali"}, {"name": "Sara"}]
-```
-
-Routes are auto-mounted at `/api/school/students`.
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| HTTP / ASGI | Python + uvicorn |
-| CLI | Rust + clap |
-| Rust extension | PyO3 + maturin |
-| Database (SQLite) | aiosqlite |
-| Database (PostgreSQL) | asyncpg |
-
----
-
-**Full docs:** [github.com/babar-xagi/Rusjango/tree/main/docs](https://github.com/babar-xagi/Rusjango/tree/main/docs)
-
-**Source:** [github.com/babar-xagi/Rusjango](https://github.com/babar-xagi/Rusjango)
+Read the [project README](../../README.md), [full documentation](../../docs/00-overview.md), [release notes](../../docs/releases/0.1.4.md), and [validation record](../../docs/11-validation.md). Package metadata uses the root README as the canonical PyPI description.
