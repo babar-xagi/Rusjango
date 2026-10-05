@@ -1,19 +1,49 @@
-# Rust internals
+# 🦀 Rust internals
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-The workspace has two crates: rusjango-cli and rusjango-core. Versions are inherited from the workspace, currently 0.1.4.
+The workspace contains `rusjango-cli` and `rusjango-core`. Both inherit version **0.1.4** from the workspace.
 
-## Core extension
+## 📦 Native extension
 
-PyO3 builds rusjango._core. It exports a version string and placeholder route_count returning zero. It is not connected to the Python route table and performs no request acceleration.
+PyO3 builds `rusjango._core`. The extension exports:
 
-The build uses PyO3's stable ABI for Python 3.11+. Maturin configures extension linking; Cargo test builds use the interpreter selected by PYO3_PYTHON. Point it to an absolute environment interpreter path if the system Python lacks its development library.
+| Export | Behavior |
+|---|---|
+| `__version__` | Native package version |
+| `route_count` | Placeholder returning zero |
 
-## CLI
+The placeholder is not connected to the Python route table. Requests are not accelerated by Rust today.
 
-Clap handles commands. Scaffolding templates are included with include_str at compile time. Installed binaries no longer read files from CARGO_MANIFEST_DIR at runtime.
+The build targets the stable ABI for Python 3.11+. Maturin configures extension linking. Cargo tests use the interpreter selected through `PYO3_PYTHON`.
 
-Project detection parses TOML. Literal app lists and DATABASE assignments are edited within their value ranges, preserving unrelated settings. This is intentionally not a general Python parser. Unsupported computed values are rejected; edited-value comments may be lost.
+```bash
+PYO3_PYTHON="$(pwd)/.venv/bin/python" cargo test --workspace
+```
 
-The dev/migrate commands spawn Python through uv when available. Missing uv triggers a direct Python fallback; failed migration subprocesses produce a nonzero CLI exit.
+Use an absolute interpreter path when system Python lacks its development library.
+
+## 🛠️ Standalone CLI
+
+Clap handles command parsing. Templates are embedded with `include_str!` at compile time, so the installed binary does not read source-checkout templates.
+
+Project detection parses TOML. Literal app lists and DATABASE assignments are edited within value ranges while preserving unrelated settings.
+
+The Rust editor is intentionally a limited literal-settings editor. Unsupported computed values are rejected; comments inside edited values may be lost.
+
+## ▶️ Python subprocesses
+
+Dev/migrate prefer uv. If uv is missing, they fall back to direct Python.
+
+Migration process failures produce nonzero CLI exits. Existing PYTHONPATH entries are preserved when source lookup adds a path.
+
+## 🔎 Source
+
+- [Core module](../../crates/rusjango-core/src/lib.rs)
+- [Rust CLI](../../cli/src/main.rs)
+- [Project/template helpers](../../cli/src/project.rs)
+- [Settings editor](../../cli/src/settings.rs)
+
+---
+
+[📚 Documentation home](../README.md) · [Architecture](../01-architecture.md) · [Contributing →](../10-contributing.md)

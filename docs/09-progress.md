@@ -1,14 +1,32 @@
-# Phase tracking
+# 🧭 Implementation progress
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-[PROGRESS.md](../PROGRESS.md) is the maintained phase tracker. [Validation results](11-validation.md) record the latest local gate run.
+[PROGRESS.md](../PROGRESS.md) is the maintained phase tracker. Use this page to connect implemented behavior to its source files.
 
-## Implementation map
+## ✅ Implemented foundations
 
-- Phase 1: app.py, routing.py, asgi.py, middleware.py, security.py, server.py, cli.py, cli/src.
-- Phase 2: apps.py, per-app Router instances, both CLI app commands, templates/app.
-- Phase 3: orm/fields.py, model.py, query.py, sql.py, connection.py, _migrate.py, templates/orm.
-- Phase 4 foundation: schema.py and request-validation dispatch in routing.py.
+| Phase | Scope | Main implementation |
+|---|---|---|
+| 1 | CLI, async JSON routes, parameters, middleware, lifecycle | `app.py`, `routing.py`, `asgi.py`, `middleware.py`, `security.py`, `server.py`, CLI |
+| 2 | Add/remove apps and independent route mounting | `apps.py`, `Router`, app commands, `templates/app` |
+| 3 | SQLite/PostgreSQL CRUD and missing-table creation | `orm/`, `_migrate.py`, `templates/orm` |
+| 4 foundation | Strict types, defaults, nesting, and collections | `schema.py` and request validation in `routing.py` |
 
-Phases 1–3 being implemented does not mean production readiness. ORM schema evolution, transactions, relationships, request limits, and operational hardening remain gaps. Rust request acceleration is not yet implemented.
+The [0.1.4 release notes](releases/0.1.4.md) summarize the repair pass. The [validation record](11-validation.md) links to the successful local and hosted checks.
+
+## 🔜 Next phase
+
+Phase 4 still needs a documented coercion/validator extension API, Docker scaffolding, and application test scaffolding.
+
+Relationships, tracked migrations, and transactions remain separate ORM work. Auth should be established before an admin interface is exposed.
+
+## 🧪 Readiness and performance
+
+Implemented phases are feature milestones. They do not establish production readiness or a performance advantage.
+
+Operational gaps include request limits and broader hardening. Rust request acceleration remains planned.
+
+---
+
+[📚 Documentation home](README.md) · [Full phase tracker →](../PROGRESS.md)

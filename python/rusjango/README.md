@@ -1,27 +1,36 @@
-# Rusjango 0.1.4
+# 🦀 Rusjango
 
-An alpha async Python API framework with Django-style apps, progressive scaffolding, and a separate Rust CLI. The native extension is a placeholder and currently does not accelerate requests.
+**Async Python APIs with Django-style apps and progressive scaffolding.**
 
-Requires Python 3.11+. Install into a virtual environment:
+[![PyPI](https://img.shields.io/pypi/v/rusjango)](https://pypi.org/project/rusjango/)
+[![Python](https://img.shields.io/pypi/pyversions/rusjango)](https://pypi.org/project/rusjango/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE)
+
+## 🚀 Start a project
+
+Requires Python 3.11+ and uv:
 
 ```bash
-pip install rusjango==0.1.4
-# Optional PostgreSQL driver:
-pip install 'rusjango[postgres]==0.1.4'
-```
-
-```bash
-rusjango new demo
+uvx --from rusjango==0.1.4 rusjango new demo
 cd demo
 uv sync
-rusjango add app school
-rusjango add orm
-rusjango migrate
-rusjango dev
+uv run rusjango dev
 ```
 
-Implemented: async JSON routes, typed primitive parameters, strict schemas, middleware, app mounting, SQLite/PostgreSQL CRUD, and table creation. Scaffolding preserves custom APIs and unrelated settings.
+Open **http://127.0.0.1:8000/**.
 
-The ORM has no tracked migrations, transaction API, or relationships. Auth, admin, OpenAPI, workers, and Rust request acceleration remain pending. SQLite requires 3.35+; old databases affected by the `model` table-name bug need explicit data migration.
+## ✨ Implemented
 
-Read the [project README](../../README.md), [full documentation](../../docs/00-overview.md), [release notes](../../docs/releases/0.1.4.md), and [validation record](../../docs/11-validation.md). Package metadata uses the root README as the canonical PyPI description.
+Async JSON routes, typed path/query parameters, strict schemas, independent app routers, ASGI middleware, SQLite/PostgreSQL CRUD, and a complete Python CLI. A separate Rust CLI provides the same command surface.
+
+> 🧪 **0.1.4 is alpha.** The native extension remains a placeholder. Auth, admin, OpenAPI, relationships, transactions, and tracked migrations are pending.
+
+## 📚 Learn more
+
+- [Project README and examples](../../README.md)
+- [Documentation home](../../docs/README.md)
+- [First steps](../../docs/02-getting-started.md)
+- [Release notes](../../docs/releases/0.1.4.md)
+- [Validation record](../../docs/11-validation.md)
+
+The package metadata uses the root README as the canonical PyPI description.

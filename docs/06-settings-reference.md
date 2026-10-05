@@ -1,30 +1,121 @@
-# Settings
+# ⚙️ Configure your application
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Rusjango imports the selected Python settings file and collects public uppercase names. Python code in that file is executed, so use only trusted configuration files.
+The generated project stores runtime settings in `settings.py`. The application loads it with:
 
-| Setting | Purpose |
+```python
+from rusjango import Rusjango
+
+app = Rusjango(settings="settings.py")
+```
+
+Rusjango executes the trusted Python file and collects its public uppercase names.
+
+## 🧩 Apps and middleware
+
+```python
+INSTALLED_APPS = ["apps.school"]
+
+MIDDLEWARE = [
+    "rusjango.security.SecurityMiddleware",
+]
+```
+
+Each installed package exposes `api.py` with a `router`. Keep `app.load_installed_apps()` in `main.py` to mount them.
+
+The first middleware entry sees the request first and the response last.
+
+## 🗃️ Database settings
+
+Disable the ORM:
+
+```python
+DATABASE = None
+```
+
+Use SQLite:
+
+```python
+DATABASE = {
+    "ENGINE": "sqlite",
+    "NAME": "db.sqlite3",
+}
+```
+
+The SQLite path is relative to the working directory. CLI operations run from the detected project root.
+
+Use PostgreSQL with `rusjango[postgres]` installed:
+
+```python
+DATABASE = {
+    "ENGINE": "postgresql",
+    "URL": "postgresql://user:password@localhost:5432/demo",
+    "MIN_SIZE": 1,
+    "MAX_SIZE": 10,
+}
+```
+
+One backend is configured per process. Close the current connection or pool before changing it.
+
+> 💡 **ASYNC:** Generated configs may include `"ASYNC": True`. It is informational; ORM operations are always async.
+
+## 🔒 Debug and allowed hosts
+
+Generated projects use `DEBUG = True` for development.
+
+For production-style host checking:
+
+```python
+DEBUG = False
+ALLOWED_HOSTS = ["example.com", ".example.org"]
+```
+
+With `SecurityMiddleware` enabled:
+
+- Exact names match that hostname.
+- `.example.org` permits the base domain and its subdomains.
+- `*` permits any valid hostname.
+- An empty or missing allowlist rejects every host.
+- Configure `::1` to allow bracketed IPv6 loopback requests.
+
+`DEBUG = True` bypasses host validation and adds traceback detail to unexpected handler errors.
+
+> 📌 **This is a host check:** It does not add authentication, HTTPS, CSRF protection, or rate limiting.
+
+## 📋 Settings reference
+
+| Setting | Current behavior |
 |---|---|
-| APP_NAME | Human-readable application name |
-| DEBUG | Adds traceback detail to 500 responses; bypasses host validation |
-| ALLOWED_HOSTS | Production host allowlist; empty/missing list denies all hosts with SecurityMiddleware |
-| INSTALLED_APPS | Dotted packages with api.py and a router object |
-| MIDDLEWARE | Dotted ASGI middleware classes; first entry runs first |
-| DATABASE | None, SQLite config, or PostgreSQL config |
-| SECRET_KEY | Reserved for future signing/auth features; currently unused by framework |
-| AUTH / ADMIN / AI / WORKER / PAYMENTS | Reserved settings; no implemented feature behavior |
+| `APP_NAME` | Project metadata; available to application code |
+| `DEBUG` | Enables error tracebacks and skips host validation |
+| `ALLOWED_HOSTS` | Host allowlist used by SecurityMiddleware |
+| `INSTALLED_APPS` | Application packages to mount |
+| `MIDDLEWARE` | Ordered list of ASGI middleware classes |
+| `DATABASE` | None, SQLite, or PostgreSQL configuration |
+| `SECRET_KEY` | Reserved; the framework currently does not use it for signing/auth |
+| `AUTH`, `ADMIN`, `AI`, `WORKER`, `PAYMENTS` | Reserved placeholders with no implemented feature behavior |
 
-Generated settings use DEBUG=True and allow localhost/127.0.0.1. Production host patterns support exact names, `*`, and `.example.com` (base domain plus subdomains). Bracketed IPv6 hosts are parsed without their brackets; configure `::1` to allow loopback IPv6.
+## 📄 Project entry point
+
+The CLI reads these keys from `pyproject.toml`:
 
 ```toml
 [tool.rusjango]
-settings = 'settings.py'
-app = 'main:app'
+settings = "settings.py"
+app = "main:app"
 ```
 
-The CLI reads these project keys. DATABASE NAME is relative to the working directory; CLI operations run from the detected project root. ASYNC is informational: ORM operations are always async.
+`app` selects the object served by the development command. `settings` selects the file edited by app/ORM commands.
 
-SQLite config uses ENGINE and NAME. PostgreSQL uses ENGINE=postgresql (postgres is an alias), URL or DSN, and optional MIN_SIZE/MAX_SIZE (1/10 defaults). The asyncpg dependency is optional.
+If you rename the settings file, also update the `Rusjango(settings=...)` argument in your application code. That constructor does not infer its path from the CLI configuration.
 
-CLI editing supports literal list/dictionary/None values. Dynamic settings can be used by the runtime but require manual editing rather than feature-management commands.
+## ✍️ CLI editing rules
+
+App/ORM commands edit literal `INSTALLED_APPS` lists and `DATABASE` dictionaries/None values. Computed settings require manual editing.
+
+Unrelated settings are preserved. Formatting and comments inside the edited value may be normalized.
+
+---
+
+[← Async ORM](05-orm-guide.md) · [📚 Documentation home](README.md) · [Next: Middleware →](07-middleware.md)

@@ -1,27 +1,143 @@
-# Getting started
+# 🚀 First steps
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Requires Python 3.11+, stable Rust, and uv for source development.
+In this tutorial, you will install Rusjango, create a project, start the server, and check your first JSON response.
 
-## WSL2 setup
+## 📋 Requirements
 
-Run these in the WSL shell:
+- Python **3.11 or newer**.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) for the recommended workflow.
+- Rust only if you are building from source or working on the Rust CLI.
+
+Published wheels cover Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/arm64. A platform without a compatible wheel may need a Rust source build.
+
+## 📦 Install and create a project
+
+Use uv to run the CLI in an isolated tool environment:
 
 ```bash
-cd /mnt/d/Rusjango
-uv sync --all-packages --all-extras
-cargo build -p rusjango-cli
-cd examples/hello
-uv run python -m rusjango migrate
-uv run python -m rusjango dev
+uvx --from rusjango==0.1.4 rusjango new demo
+cd demo
+uv sync
 ```
 
-The virtual environment is Linux-specific; do not reuse it from Windows Python. `uv sync` builds the extension with maturin. If Rust linking picks an incomplete system Python, set PYO3_PYTHON to the absolute `.venv/bin/python` path when running Cargo checks.
+`uv sync` installs the generated project's dependencies into its own `.venv`.
 
-The repository's `.python-version` pins Python 3.12. To use your installed Python 3.14, run `uv sync --python 3.14 --all-packages --all-extras` and pass `--python 3.14` to subsequent `uv run` commands, or set `UV_PYTHON=3.14` in that shell. Python 3.11 is the minimum supported version.
+The initial scaffold has three files:
 
-## Generated project using this checkout
+```text
+demo/
+├── main.py
+├── settings.py
+└── pyproject.toml
+```
+
+> 💡 **Use the project environment:** Once you are inside `demo`, run commands with `uv run rusjango`. This keeps the CLI and your application's dependencies in the same environment.
+
+<a id="install-with-pip"></a>
+### Install with pip
+
+If you prefer pip, create and activate a virtual environment first.
+
+**Linux, macOS, or WSL:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows PowerShell:**
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Then:
+
+```bash
+python -m pip install rusjango==0.1.4
+python -m rusjango new demo
+cd demo
+python -m rusjango dev
+```
+
+Keep using that active environment for the pip workflow. Install any additional application dependencies into it. The commands below use uv; with pip, replace `uv run rusjango` with `python -m rusjango`.
+
+## ▶️ Run the development server
+
+Inside your project:
+
+```bash
+uv run rusjango dev
+```
+
+The server listens at **http://127.0.0.1:8000/** and reloads after code changes.
+
+Open that URL or use:
+
+```bash
+curl http://127.0.0.1:8000/
+```
+
+Response:
+
+```json
+{"message": "Hello Rusjango"}
+```
+
+Stop the server with **Ctrl+C**.
+
+## ✍️ Add your first route
+
+The generated `main.py` creates the application with `settings.py` and loads installed apps. Add this route above `app.load_installed_apps()`:
+
+```python
+@app.get("/hello/{name}")
+async def hello(name: str):
+    return {"message": f"Hello {name}"}
+```
+
+Restart the server and open **http://127.0.0.1:8000/hello/Ali**.
+
+```json
+{"message": "Hello Ali"}
+```
+
+The `{name}` path segment becomes the handler's `name` argument.
+
+## 🧩 Try the bundled example
+
+From a source checkout:
+
+```bash
+git clone https://github.com/babar-xagi/Rusjango.git
+cd Rusjango
+uv sync --all-packages --all-extras
+cargo build -p rusjango-cli
+
+cd examples/hello
+uv run rusjango migrate
+uv run rusjango dev
+```
+
+Visit **http://127.0.0.1:8000/api/school/students**.
+
+> 💡 **Database setup:** Run `migrate` before database-backed requests. Server startup does not create tables.
+
+The repository pins Python 3.12. To use Python 3.14 in your WSL shell:
+
+```bash
+export UV_PYTHON=3.14
+uv sync --all-packages --all-extras
+```
+
+Keep Windows and WSL virtual environments separate. For Cargo checks, point `PYO3_PYTHON` to the absolute `.venv/bin/python` path if system Python lacks its development library.
+
+If your existing checkout is at `D:\Rusjango` on Windows, use `cd /mnt/d/Rusjango` inside WSL instead of cloning it again.
+
+## 🔬 Use unreleased source in a new project
 
 From the repository root:
 
@@ -30,20 +146,21 @@ uv run python -m rusjango new demo
 uv venv demo/.venv
 uv pip install --python demo/.venv/bin/python -e ./python/rusjango
 cd demo
-.venv/bin/python -m rusjango add app school
-.venv/bin/python -m rusjango add orm
-.venv/bin/python -m rusjango migrate
 .venv/bin/python -m rusjango dev
 ```
 
-Installing from the checkout exercises unreleased changes. Otherwise, a generated project's `uv sync` resolves `rusjango` from the package index.
+This installs the checkout into the new project's environment. A normal generated-project `uv sync` uses the package index.
 
-## Test the example
+## 🛠️ Troubleshooting
 
-```bash
-curl http://127.0.0.1:8000/api/school/students
-curl -X POST http://127.0.0.1:8000/api/school/students \
-  -H 'Content-Type: application/json' -d '{"name":"Ali","age":20}'
-```
+| Symptom | Check |
+|---|---|
+| `No module named rusjango` | Use the environment where you installed the package |
+| “No Rusjango project found” | Run from a directory beneath the project's `pyproject.toml` |
+| Database table is missing | Stop the server, run `migrate`, then restart |
+| Production requests return 400 | Check `ALLOWED_HOSTS` and the request's Host header |
+| WSL cannot use a Windows venv | Create a Linux venv from inside WSL |
 
-`age` may be omitted or null. An invalid type returns 422. Shut down with Ctrl+C. Table creation does not happen automatically during startup.
+---
+
+[← Overview](00-overview.md) · [📚 Documentation home](README.md) · [Next: Routes and requests →](04-api-design.md)

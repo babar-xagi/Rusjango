@@ -1,19 +1,65 @@
-# Overview
+# 🦀 Welcome to Rusjango
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Rusjango is an alpha API framework for developers who want a small async Python application organized into Django-style app packages.
+Rusjango is an async Python API framework with Django-style application packages. It begins with a small project and lets you add app and database scaffolding through the CLI.
 
-A project begins with three files. `add app` creates a router package; `add orm` configures SQLite and adds starter model/schema files. The Python package contains the full CLI. The Rust CLI offers the same commands and embeds its templates at build time.
+## 🌱 Start small
 
-The runtime currently uses Uvicorn, Python routing/middleware/JSON serialization, and aiosqlite or asyncpg. The PyO3 Rust extension establishes a future integration boundary, but does not accelerate requests today.
+A new project contains three files:
 
-## Implemented scope
+```text
+demo/
+├── main.py          # Routes and application object
+├── settings.py      # Runtime configuration
+└── pyproject.toml   # Dependencies and CLI project settings
+```
 
-Routing, typed primitive parameters, strict schemas, middleware, app mounting, basic async CRUD, and table creation. Admin, auth, OpenAPI, workers, AI integrations, and enterprise features are plans.
+Write an async function, register a route, and return JSON-compatible data:
 
-## Product direction
+```python
+from rusjango import Rusjango
 
-The distinguishing goal is reliable progressive scaffolding: adding a feature should preserve the developer's existing code. No benchmark or user-adoption evidence currently proves a performance or ecosystem advantage.
+app = Rusjango()
 
-Use it for experimentation and contribution. Review the [current limitations](../README.md#current-limits) before choosing it for an application. See [progress](../PROGRESS.md) for phase boundaries.
+
+@app.get("/")
+async def home():
+    return {"message": "Hello Rusjango"}
+```
+
+Save this standalone example as `main.py` and run `python -m uvicorn main:app --reload` in an environment with Rusjango installed.
+
+## 🧩 Grow your project
+
+| When you need… | Use… |
+|---|---|
+| Another group of endpoints | `rusjango add app school` |
+| Validated JSON input | A `Schema` subclass |
+| A database | `rusjango add orm`, then `rusjango migrate` |
+| Project configuration | `settings.py` |
+| Request/response hooks | ASGI middleware |
+
+Applications own independent `Router()` instances. An app named `school` is mounted under `/api/school/`.
+
+Adding ORM creates starter model/schema files. An untouched starter API can be upgraded; custom API files stay intact.
+
+## ⚙️ How it runs
+
+Uvicorn serves the ASGI application. Routing, middleware, validation, and JSON serialization run in Python. SQLite uses aiosqlite; PostgreSQL uses the optional asyncpg driver.
+
+The Python package includes the full CLI. A separate Rust CLI implements the same commands with embedded templates.
+
+> 📌 **Rust status:** The native extension currently exports version information and a placeholder function. Rust request acceleration is planned; no benchmark advantage is claimed.
+
+## 🧭 Choose it with the current scope in mind
+
+Use Rusjango for experimentation and contribution. The ORM supports basic CRUD and table creation, with one database per process. It does not yet provide relationships, transaction APIs, or tracked schema migrations.
+
+Auth, admin, OpenAPI, Docker/test scaffolding, workers, and AI integrations remain planned features.
+
+[PROGRESS.md](../PROGRESS.md) tracks the phases. The [validation record](11-validation.md) documents what has been tested.
+
+---
+
+[📚 Documentation home](README.md) · [Next: First steps →](02-getting-started.md)

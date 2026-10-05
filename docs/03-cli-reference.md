@@ -1,31 +1,106 @@
-# CLI reference
+# 🛠️ CLI reference
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Use `rusjango` after installing the Python package, `python -m rusjango`, or the compiled Rust binary. Run `--help` for options.
+Inside a uv-managed project, use `uv run rusjango`. In an activated pip environment, use `python -m rusjango`. A standalone Rust binary exposes the same commands.
+
+## 🔎 Find help
+
+```bash
+uv run rusjango --help
+uv run rusjango dev --help
+uv run rusjango add app --help
+```
+
+## 📋 Commands
 
 | Command | Behavior |
 |---|---|
-| `new <name> [-d DIR]` | Creates `DIR/<name>` with exactly three files; refuses an existing destination |
-| `dev [--host HOST] [--port PORT] [--no-reload]` | Starts Uvicorn; reload enabled by default |
-| `add app <name>` | Creates `apps/<name>`, registers it, and ensures route loading |
-| `remove app <name> [--yes]` | Unregisters and deletes the app; prompts by default |
-| `add orm` | Enables SQLite if disabled; adds missing models/schemas and upgrades untouched starter APIs |
-| `remove orm [--yes]` | Sets DATABASE to None; preserves model/schema/API files and data |
-| `migrate` | Creates missing model tables and propagates failure as a nonzero exit |
+| `new <name> [-d DIR]` | Create `DIR/<name>` with three scaffold files |
+| `dev [--host HOST] [--port PORT] [--no-reload]` | Start Uvicorn; reload is on by default |
+| `add app <name>` | Scaffold, register, and mount an app |
+| `remove app <name> [--yes]` | Confirm, unregister, and delete the app package |
+| `add orm` | Configure SQLite if disabled and add ORM starter files |
+| `remove orm [--yes]` | Set DATABASE to None and keep application files |
+| `migrate` | Create missing model tables; return nonzero on failure |
 
-Project detection reads `[tool.rusjango]` in a parent `pyproject.toml`. Its settings path is respected. Standard scaffolds use `main.py` and `app` as the application object.
+### 🚀 New project
 
-Project names accept letters, digits, `_`, and `-`. App names must be Python identifiers beginning with a letter or `_`; `apps` and `rusjango` are reserved. Removing a symlinked app is refused.
+```bash
+uvx --from rusjango==0.1.4 rusjango new demo
+```
 
-## Editing and preservation
+The destination must not already exist. Project names accept letters, digits, hyphens, and underscores.
 
-Both CLIs support literal INSTALLED_APPS lists with single or double quotes. DATABASE must be None or a dictionary. Computed settings are not a supported editing format; edit them manually. The edited value may be normalized and comments inside that value removed; unrelated file contents are preserved.
+### ▶️ Development server
 
-`add orm` never replaces a custom API based merely on its imports. It upgrades only the exact untouched starter API. Existing model/schema files stay intact. Apps added after ORM activation also receive ORM starter files.
+```bash
+uv run rusjango dev --host 127.0.0.1 --port 8080 --no-reload
+```
 
-`remove orm` disables database access, not ORM-dependent routes. Adapt those handlers manually. `migrate` does not alter columns, rename tables, roll back changes, or track migration history.
+The default host/port are `127.0.0.1:8000`.
 
-Rust embeds templates, so an installed binary does not require the source checkout. Its dev/migrate commands require Python and prefer uv, with a Python fallback when uv is unavailable.
+### 🧩 Add and remove apps
 
-Auth, admin, Docker, tests, workers, AI, and payments commands are not implemented.
+```bash
+uv run rusjango add app school
+uv run rusjango remove app school
+```
+
+The removal command asks for confirmation. Use `--yes` to skip it deliberately.
+
+App names must be Python identifiers beginning with a letter or underscore. `apps` and `rusjango` are reserved. Symlinked app removal is refused.
+
+### 🗃️ Enable and disable ORM
+
+```bash
+uv run rusjango add orm
+uv run rusjango migrate
+```
+
+```bash
+uv run rusjango remove orm
+```
+
+Disabling ORM preserves models, schemas, API code, migration scaffold, and data. Adapt ORM-dependent handlers yourself.
+
+> 💡 **Migrate is table creation:** It does not alter columns, rename tables, move data, or maintain migration history.
+
+## 📁 Project detection
+
+Commands find a parent `pyproject.toml` containing:
+
+```toml
+[tool.rusjango]
+settings = "settings.py"
+app = "main:app"
+```
+
+The configured settings path is respected. The standard scaffold uses `main.py` and an application object named `app`.
+
+Changing the CLI settings path also requires changing the application's explicit `Rusjango(settings=...)` argument.
+
+## ✍️ What scaffolding preserves
+
+| Action | Preservation behavior |
+|---|---|
+| Add an app | Keeps unrelated settings and existing app packages |
+| Add ORM | Adds missing models/schemas; upgrades only the exact untouched starter API |
+| Add another app after ORM | Supplies ORM starter files for the new app |
+| Remove ORM | Keeps application files and database data |
+
+The settings editor supports literal string lists and dictionary/None database assignments. Computed values are rejected before app/ORM scaffolding. Edited-value comments and formatting may change; unrelated file contents are preserved.
+
+## 🦀 Rust CLI
+
+Rust embeds templates at compile time, so its installed binary does not need a checkout. Dev/migrate prefer uv and fall back to Python when uv is unavailable.
+
+The Python package includes the full Python CLI; the separate Rust binary is optional.
+
+## 🧭 Commands still pending
+
+Auth, admin, Docker, application test scaffolding, workers, AI, and payments commands are not implemented.
+
+---
+
+[← Middleware](07-middleware.md) · [📚 Documentation home](README.md) · [Source development →](10-contributing.md)

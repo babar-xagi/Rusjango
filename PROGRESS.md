@@ -1,4 +1,4 @@
-# Build progress
+# 🧭 Build progress
 
 Updated 2026-10-05. This file records implemented scope and the gate for the next phase. Feature plans are not production-readiness claims.
 
@@ -17,7 +17,7 @@ Version 0.1.4 packages the Phase 1–3 repair pass and is published on [PyPI](ht
 | 9 | AI helpers | Planned |
 | 10 | Enterprise capabilities | Planned |
 
-## Phase 1–3 repair pass
+## ✅ Phase 1–3 repair pass
 
 - Literal route matching, 405 responses with Allow, 422 input errors, and empty 204 bodies.
 - Settings available before middleware; host checks and headers also cover rejected requests.
@@ -28,11 +28,11 @@ Version 0.1.4 packages the Phase 1–3 repair pass and is published on [PyPI](ht
 - Rust templates embedded in the binary; Python/Rust versions aligned at 0.1.4.
 - Source install and distribution validation; CI covers regression tests and PostgreSQL.
 
-## Gate before Phase 4 expansion
+## 🧪 Gate before Phase 4 expansion
 
 Run the Python suite, Rust CLI integration tests, real PostgreSQL tests, Rust formatting/clippy, Python lint, and wheel/source-distribution checks. See [contributing](docs/10-contributing.md) for commands and [validation](docs/11-validation.md) for the last local results.
 
-## Next: Phase 4
+## 🔜 Next: Phase 4
 
 1. Decide and document opt-in coercion and validation extension APIs.
 2. Implement Docker scaffolding with a production configuration example.

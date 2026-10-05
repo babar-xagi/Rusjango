@@ -1,23 +1,43 @@
-# Example application
+# 🧪 School API example
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Run the bundled school API from `examples/hello`. From the repository root in WSL2:
+The bundled example shows an app router, strict schemas, and SQLite CRUD using the workspace package.
+
+## ▶️ Run it
+
+From the repository root in WSL2:
 
 ```bash
 uv sync --all-packages --all-extras
 cd examples/hello
-uv run python -m rusjango migrate
-uv run python -m rusjango dev
+uv run rusjango migrate
+uv run rusjango dev
 ```
 
-Visit `http://127.0.0.1:8000/api/school/students`. Create a student with:
+## 📥 Create a student
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/school/students \
-  -H 'Content-Type: application/json' -d '{"name":"Ali"}'
+  -H "Content-Type: application/json" -d '{"name":"Ali"}'
 ```
 
-The optional age defaults to null. Invalid schema types return 422. Run `migrate` before requests that use the database; startup does not create tables.
+The response includes a generated integer ID and `"age": null`.
 
-The example uses the workspace package, so it exercises this checkout. Keep commands in one OS environment: WSL virtual environments cannot be reused by Windows Python. See [getting started](../docs/02-getting-started.md) for setup and generated-project instructions.
+## 📤 List students
+
+```bash
+curl http://127.0.0.1:8000/api/school/students
+```
+
+## ✅ Check validation
+
+Send `"age": "20"` instead of an integer to receive a 422 response.
+
+Run `migrate` before database requests; startup does not create tables. Stop the server with Ctrl+C.
+
+> 💡 **Environment:** This example uses the source workspace. Keep Windows and WSL virtual environments separate.
+
+---
+
+[📚 Documentation](../docs/README.md) · [First steps](../docs/02-getting-started.md) · [ORM guide](../docs/05-orm-guide.md)

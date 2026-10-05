@@ -1,42 +1,95 @@
-# Contributing and validation
+# 🤝 Contributing
 
-Applies to Rusjango 0.1.4 (alpha).
+**Rusjango 0.1.4 · Alpha**
 
-Work from a clean source checkout with Python 3.11+, stable Rust, and uv. Use one OS environment consistently; on WSL2 the repository is `/mnt/d/Rusjango`.
+Contributions should improve implemented behavior, preserve existing application code, and keep the documentation accurate.
+
+## 🧰 Set up source development
+
+Use Python 3.11+, stable Rust, and uv. Run all commands in one OS environment.
+
+In WSL2:
 
 ```bash
+cd /mnt/d/Rusjango
 uv sync --all-packages --all-extras
 cargo build -p rusjango-cli
-RUSJANGO_RUST_CLI="$(pwd)/target/debug/rusjango" \
-  uv run --all-packages --all-extras pytest python/rusjango/tests -q
-cargo fmt --all -- --check
-PYO3_PYTHON="$(pwd)/.venv/bin/python" cargo test --workspace
-PYO3_PYTHON="$(pwd)/.venv/bin/python" cargo clippy --workspace --all-targets -- -D warnings
-uv run ruff check python/rusjango/src python/rusjango/tests scripts --select F
-uv build --package rusjango
 ```
 
-On Windows the Rust binary has an .exe suffix and the virtual environment interpreter is `.venv/Scripts/python.exe`. CI tests Python 3.11-3.14 and checks the installed extension and both CLIs.
+The repository pins Python 3.12. Set `UV_PYTHON=3.14` before uv commands when you want Python 3.14.
 
-## Real PostgreSQL tests
+On Windows, the environment interpreter is `.venv/Scripts/python.exe` and the Rust CLI binary has an `.exe` suffix.
 
-Point RUSJANGO_TEST_POSTGRES_DSN at a disposable database and rerun pytest. The tests create uniquely named tables and remove them afterward. Without that environment variable, the two live backend tests skip explicitly; SQL and pool-release regressions still run.
+## 🧪 Run Python and CLI checks
 
-For a local disposable server without a system PostgreSQL service, the optional runner uses a separate Python 3.12 environment because pgserver publishes wheels for that version:
+From the repository root in Linux/WSL:
+
+```bash
+RUSJANGO_RUST_CLI="$(pwd)/target/debug/rusjango" \
+  uv run --all-packages --all-extras pytest python/rusjango/tests -q
+```
+
+Set `RUSJANGO_TEST_POSTGRES_DSN` to include live PostgreSQL tests. Without a DSN, those two tests skip. Without a Rust CLI path, its integration cases skip.
+
+> 💡 **Use a disposable database:** PostgreSQL tests create uniquely named tables and clean them up. Test against a database intended for tests.
+
+## 🐘 Start a disposable PostgreSQL server
+
+The optional runner can start a temporary server without a system PostgreSQL service:
 
 ```bash
 uv venv --python 3.12 .venv-postgres
 uv pip install --python .venv-postgres/bin/python pgserver==0.1.4
+
 RUSJANGO_RUST_CLI="$(pwd)/target/debug/rusjango" \
   .venv-postgres/bin/python scripts/test_postgres.py .venv/bin/python
 ```
 
-The runner starts an isolated temporary server, passes its DSN to the suite, and stops it afterward. pgserver is a test aid, not a runtime dependency.
+The helper environment uses Python 3.12 for the pgserver wheel. The test suite still runs with the interpreter passed as the final argument.
 
-## Contribution rules
+The runner stops the isolated server afterward. pgserver is a development aid, not a Rusjango runtime dependency.
 
-Keep the initial scaffold to three files. Preserve custom code when adding features. Destructive commands need confirmation. Test regression triggers and failure paths, not just happy paths. Keep Python and Rust command behavior aligned and versions consistent. Update relevant docs and the phase tracker with implemented scope and remaining limits.
+## 🦀 Check Rust
 
-Never claim Rust performance, production safety, or feature completeness without evidence. Changes to model table names require explicit data-migration guidance. Do not publish packages or run feature-destructive commands as part of routine tests against a real user project.
+```bash
+cargo fmt --all -- --check
+PYO3_PYTHON="$(pwd)/.venv/bin/python" cargo test --workspace
+PYO3_PYTHON="$(pwd)/.venv/bin/python" cargo clippy --workspace --all-targets -- -D warnings
+```
 
-For an explicitly authorized publication, follow the [release procedure](12-releasing.md). [0.1.4 release notes](releases/0.1.4.md) describe this repair pass and its compatibility changes.
+Use an absolute interpreter path when system Python lacks its development library.
+
+## 🧹 Check Python style
+
+```bash
+uv run --all-packages --all-extras ruff format --check python/rusjango/src python/rusjango/tests scripts
+uv run --all-packages --all-extras ruff check python/rusjango/src python/rusjango/tests scripts --select F
+```
+
+## 📦 Check packaging
+
+```bash
+python scripts/check_release.py
+uv build --package rusjango
+.venv/bin/python scripts/verify_wheel.py dist/rusjango-0.1.4-cp311-abi3-linux_x86_64.whl
+```
+
+Select the wheel for the version and platform you built. The helper installs it into a fresh environment and checks the native module, scaffold, migration, and API.
+
+## ✍️ Keep contributions focused
+
+- Preserve the three-file initial scaffold.
+- Preserve custom code when adding a feature.
+- Keep Python/Rust commands and package versions consistent.
+- Test meaningful regression triggers and failure paths.
+- Run checks appropriate to the change.
+- Update the relevant tutorial, reference, and phase tracker.
+- Provide data-migration guidance when changing model table behavior.
+
+Do not claim production safety, Rust performance, or feature completeness without evidence.
+
+Routine validation does not publish a package. An explicitly authorized release follows the [release procedure](12-releasing.md).
+
+---
+
+[📚 Documentation home](README.md) · [Validation record →](11-validation.md)
