@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. This file records implemented scope and the gate for the next phase. Feature plans are not production-readiness claims.
 
-Version 0.1.4 packages the Phase 1–3 repair pass. See the [release notes](docs/releases/0.1.4.md), [validation record](docs/11-validation.md), and [release procedure](docs/12-releasing.md).
+Version 0.1.4 packages the Phase 1–3 repair pass and is published on [PyPI](https://pypi.org/project/rusjango/0.1.4/) with a [GitHub release](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.4). All 13 main CI jobs and 22 release jobs passed. See the [release notes](docs/releases/0.1.4.md), [validation record](docs/11-validation.md), and [release procedure](docs/12-releasing.md).
 
 | Phase | Scope | Status |
 |---|---|---|

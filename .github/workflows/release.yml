@@ -22,10 +22,10 @@ jobs:
           python-version: "3.11"
       - run: python scripts/check_release.py "$GITHUB_REF_NAME"
 
-  # â”€â”€ Linux x86_64 + aarch64 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Linux x86_64 + aarch64
   linux:
     needs: [validate, metadata]
-    name: Wheels â€” Linux ${{ matrix.target }}
+    name: Wheels - Linux ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,10 +47,10 @@ jobs:
           name: wheels-linux-${{ matrix.target }}
           path: python/rusjango/dist
 
-  # â”€â”€ Windows x86_64 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Windows x86_64
   windows:
     needs: [validate, metadata]
-    name: Wheels â€” Windows x86_64
+    name: Wheels - Windows x86_64
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,10 +68,10 @@ jobs:
           name: wheels-windows-x86_64
           path: python/rusjango/dist
 
-  # â”€â”€ macOS x86_64 + aarch64 (Apple Silicon) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # macOS x86_64 + aarch64 (Apple Silicon)
   macos:
     needs: [validate, metadata]
-    name: Wheels â€” macOS ${{ matrix.target }}
+    name: Wheels - macOS ${{ matrix.target }}
     runs-on: macos-latest
     strategy:
       matrix:
@@ -93,7 +93,7 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: python/rusjango/dist
 
-  # â”€â”€ Source distribution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Source distribution
   sdist:
     needs: [validate, metadata]
     name: Source distribution
@@ -114,7 +114,7 @@ jobs:
           name: wheels-sdist
           path: python/rusjango/dist
 
-  # â”€â”€ Publish to PyPI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Publish to PyPI
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest

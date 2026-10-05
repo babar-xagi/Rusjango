@@ -2,7 +2,7 @@
 
 An experimental async Python API framework with Django-style apps and an optional Rust extension.
 
-**Version: 0.1.4. Status: alpha.** Phases 1â€“3 provide routing, app scaffolding, and a basic async ORM. The Rust CLI is implemented; the Rust runtime core is a placeholder and currently provides no routing or serialization acceleration. Auth, admin, OpenAPI, workers, AI helpers, and enterprise features are not implemented.
+**Version: 0.1.4. Status: alpha.** Phases 1-3 provide routing, app scaffolding, and a basic async ORM. The Rust CLI is implemented; the Rust runtime core is a placeholder and currently provides no routing or serialization acceleration. Auth, admin, OpenAPI, workers, AI helpers, and enterprise features are not implemented.
 
 ## What works
 
@@ -83,7 +83,7 @@ uv build --package rusjango
 
 To exercise the Rust CLI alongside Python, build it first and set `RUSJANGO_RUST_CLI` to its absolute binary path. Real PostgreSQL tests require `RUSJANGO_TEST_POSTGRES_DSN` pointing to a disposable test database. [Testing details](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/10-contributing.md).
 
-The Phase 1–3 repair pass passed 74 tests on Python 3.11 and 3.14, including both CLIs and live PostgreSQL. Rust checks and clean distribution builds also passed. See the [validation record](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/11-validation.md) for scope and reproduction steps.
+The Phase 1–3 repair pass passed 74 tests on Python 3.11 and 3.14, including both CLIs and live PostgreSQL. Rust checks and clean distribution builds also passed. See the [validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/11-validation.md) for scope and reproduction steps.
 
 ## Current limits
 
@@ -95,6 +95,6 @@ Existing databases created by the old default-table bug may contain a table name
 
 Start with the [overview](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/00-overview.md), [architecture](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/01-architecture.md), [CLI reference](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/03-cli-reference.md), [API guide](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/04-api-design.md), and [ORM guide](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/05-orm-guide.md). [PROGRESS.md](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/PROGRESS.md) tracks the phase gates.
 
-Additional guides: [settings](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/06-settings-reference.md), [middleware](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/07-middleware.md), [schemas](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/08-schema-validation.md), [contributing](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/10-contributing.md), [validation](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/11-validation.md), and [release procedure](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/12-releasing.md). [Release notes](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/releases/0.1.4.md) explain compatibility changes.
+Additional guides: [settings](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/06-settings-reference.md), [middleware](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/07-middleware.md), [schemas](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/08-schema-validation.md), [contributing](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/10-contributing.md), [validation](https://github.com/babar-xagi/Rusjango/blob/main/docs/11-validation.md), and [release procedure](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/12-releasing.md). [Release notes](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/docs/releases/0.1.4.md) explain compatibility changes.
 
 MIT licensed. See [LICENSE](https://github.com/babar-xagi/Rusjango/blob/v0.1.4/LICENSE).

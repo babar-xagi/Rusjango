@@ -2,7 +2,7 @@
 
 Applies to Rusjango 0.1.4 (alpha).
 
-Date: 2026-10-05. This record describes local validation of the 0.1.4 release candidate. Hosted results are recorded separately after the workflow completes.
+Date: 2026-10-05. Release 0.1.4 was validated, published, and verified from PyPI. The release source is commit `2f2bc8bbb5223a58872b3b32a937867895a993e2`.
 
 ## Local results
 
@@ -38,10 +38,18 @@ uv build --package rusjango
 
 `uv build` creates the source archive first, then builds the wheel from that archive. Set `UV_PYTHON=3.14` to override the repository's Python 3.12 pin. Use an absolute PYO3_PYTHON path when running Cargo against a managed interpreter.
 
+## Hosted release results
+
+- [Main CI](https://github.com/babar-xagi/Rusjango/actions/runs/37332329846): all 13 jobs passed, covering Python 3.11-3.14 on Linux, Windows, and macOS plus Rust, PostgreSQL, and distributions.
+- [Release workflow](https://github.com/babar-xagi/Rusjango/actions/runs/37332756735): all 22 jobs passed, including repeated validation, tag checks, platform builds, metadata validation, PyPI upload, and GitHub release creation.
+- [PyPI 0.1.4](https://pypi.org/project/rusjango/0.1.4/) contains five platform wheels and the source archive. Wheels cover Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/arm64.
+- [GitHub v0.1.4](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.4) points to the verified source and includes all six distribution files and release notes.
+- Fresh installations directly from PyPI on Python 3.11 and 3.14 passed native import/version checks, generated-project scaffolding, migration, create/list requests, and a 422 validation response.
+
 ## Boundaries
 
-- Windows/macOS and Python 3.12/3.13 checks are configured in CI; the complete final suite was run locally on Linux with Python 3.11 and 3.14.
-- Hosted CI and release publication are separate gates; local results do not imply those jobs have completed.
+- The full suite with both CLIs and live PostgreSQL ran on Linux. Windows/macOS source suites passed in CI; native wheels built successfully for all five platform targets.
+- Fresh installed-wheel API checks were executed on Linux; these results do not imply native API smoke tests were executed on Windows/macOS.
 - Tests do not establish production readiness, load limits, or a performance advantage.
 - Existing databases affected by the old default table name require manual data migration; tests use isolated databases.
 - Tracked migrations, transactions, relationships, auth, admin, OpenAPI, Docker scaffolding, and application test scaffolding remain pending.

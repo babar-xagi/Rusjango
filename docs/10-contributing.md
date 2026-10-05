@@ -16,7 +16,7 @@ uv run ruff check python/rusjango/src python/rusjango/tests scripts --select F
 uv build --package rusjango
 ```
 
-On Windows the Rust binary has an .exe suffix and the virtual environment interpreter is `.venv/Scripts/python.exe`. CI tests Python 3.11â€“3.14 and checks the installed extension and both CLIs.
+On Windows the Rust binary has an .exe suffix and the virtual environment interpreter is `.venv/Scripts/python.exe`. CI tests Python 3.11-3.14 and checks the installed extension and both CLIs.
 
 ## Real PostgreSQL tests
 
