@@ -2,7 +2,7 @@
 
 **Rusjango 0.1.5 · Alpha**
 
-Date: 2026-10-06. This record tracks the Phase 4 candidate and its release gates.
+Date: 2026-10-06. Phase 4 is published as 0.1.5 from verified source commit `e632fca`.
 
 ## 🧪 Local checks
 
@@ -12,7 +12,7 @@ Date: 2026-10-06. This record tracks the Phase 4 candidate and its release gates
 - Source distribution rebuilt successfully into a wheel.
 - Fresh installed-wheel checks passed on Python 3.11 and 3.14, including Field/coercion/validator APIs, packaged Docker/test templates, generated pytest execution, and feature removal.
 - The generated image built locally and passed host rejection, debug-off errors, explicit migration, CRUD, and nonroot UID checks.
-- The restart smoke check was corrected to refresh Docker's dynamic port; its local rerun hit Docker Hub DNS timeout. Hosted Docker verification remains the completion gate for restart/persistence.
+- The restart smoke check was corrected to refresh Docker's dynamic port; its local rerun hit Docker Hub DNS timeout. Hosted Docker verification subsequently passed, including restart and persisted database data.
 
 ## 🔁 Reproduce
 
@@ -30,7 +30,10 @@ The PostgreSQL helper setup is explained in [contributing](10-contributing.md). 
 
 ## 🌍 Hosted gates
 
-CI includes the Python OS/version matrix, both-CLI/live-PostgreSQL checks, Rust checks, installed-wheel/generated-test checks, and Docker build/runtime/persistence verification. Hosted results are added after the candidate run completes.
+- [Main CI](https://github.com/babar-xagi/Rusjango/actions/runs/37438434385): all 13 jobs passed, including the OS/Python matrix, both CLIs, live PostgreSQL, Rust, packages, and Docker build/runtime/persistence.
+- [Release workflow](https://github.com/babar-xagi/Rusjango/actions/runs/37439320797): all 22 jobs passed, including repeated validation, all five platform builds, source distribution, metadata checks, PyPI publication, and GitHub release creation.
+- [PyPI 0.1.5](https://pypi.org/project/rusjango/0.1.5/) contains five platform wheels and the source archive. The [GitHub release](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.5) includes the distribution artifacts and notes.
+- Fresh PyPI installation on Python 3.14 passed native version checks, Field/coercion/validator behavior, both new scaffold types, migration, CRUD/422 responses, generated pytest execution, and feature removal.
 
 ## 🧭 Boundaries
 

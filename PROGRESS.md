@@ -2,14 +2,14 @@
 
 Updated 2026-10-06. Feature milestones are separate from production-readiness claims.
 
-Version 0.1.5 implements Phase 4. See [release notes](docs/releases/0.1.5.md) and the [Phase 4 validation record](docs/16-phase4-validation.md). Earlier [0.1.4 validation](docs/11-validation.md) remains available.
+Version 0.1.5 completes Phase 4 and is published on [PyPI](https://pypi.org/project/rusjango/0.1.5/) with a [GitHub release](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.5). All 13 main CI jobs and 22 release jobs passed. See [release notes](docs/releases/0.1.5.md) and the [Phase 4 validation record](docs/16-phase4-validation.md). Earlier [0.1.4 validation](docs/11-validation.md) remains available.
 
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Minimal CLI, async JSON API, routing, middleware | Implemented and regression-tested |
 | 2 | Add/remove apps, isolated route mounting | Implemented in both CLIs |
 | 3 | SQLite/PostgreSQL CRUD and table creation | Foundation implemented and integration-tested |
-| 4 | Validation extensions, Docker/test scaffolding | Implemented; container/release gates tracked in validation record |
+| 4 | Validation extensions, Docker/test scaffolding | Complete; runtime/package/container/release gates passed |
 | 5 | Admin | Next: groundwork; public endpoints require auth first |
 | 6 | Auth and permissions | Planned; prerequisite for exposing admin |
 | 7 | OpenAPI and developer experience | Tutorials available; API documentation generation pending |
