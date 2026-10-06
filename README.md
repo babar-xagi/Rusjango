@@ -11,19 +11,20 @@
 
 Rusjango is an async Python web framework that starts with a three-file project. Write a route, add an application, and enable a database when you need one.
 
-> 🧪 **Version 0.1.4 · Alpha.** Routing, schemas, app scaffolding, and basic async ORM are implemented. The Rust CLI works today; the native runtime extension is a placeholder. Request handling currently runs in Python.
+> 🧪 **Version 0.1.5 · Alpha.** Routing, validation extensions, app/ORM/Docker/test scaffolding, and basic async ORM are implemented. The Rust CLI works today; the native runtime extension is a placeholder. Request handling currently runs in Python.
 
 ## ✨ What you can build with it
 
 | Feature | What you get |
 |---|---|
 | **Async APIs** | GET, POST, PUT, and DELETE handlers with JSON responses |
-| **Typed inputs** | Path/query conversion and strict JSON schema validation |
+| **Typed inputs** | Strict schemas, opt-in coercion, Field constraints, and synchronous validators |
 | **Organized apps** | Independent routers mounted under `/api/<app>/` |
 | **Async ORM** | SQLite and PostgreSQL create, read, update, and delete |
 | **Progressive scaffolding** | CLI commands that preserve custom APIs and unrelated settings |
 | **Middleware** | ASGI middleware, Host validation, and basic security headers |
 | **Two CLIs** | Python CLI in the package and a standalone Rust CLI |
+| **Docker and tests** | Nonroot container scaffold and isolated ASGI pytest fixture |
 
 ## 🚀 Quick start
 
@@ -32,7 +33,7 @@ You need **Python 3.11+** and [uv](https://docs.astral.sh/uv/getting-started/ins
 ### 1. Create your project
 
 ```bash
-uvx --from rusjango==0.1.4 rusjango new demo
+uvx --from rusjango==0.1.5 rusjango new demo
 cd demo
 uv sync
 ```
@@ -154,6 +155,23 @@ curl http://127.0.0.1:8000/api/school/students
 
 PostgreSQL is supported through the optional `rusjango[postgres]` dependency. Follow the [ORM guide](https://github.com/babar-xagi/Rusjango/blob/main/docs/05-orm-guide.md) to configure it.
 
+## 🐳 Containers and 🧪 application tests
+
+```bash
+uv run rusjango add tests
+uv run --with pytest --with pytest-asyncio pytest tests
+
+uv run rusjango add docker
+export ALLOWED_HOSTS=localhost,127.0.0.1
+docker compose build
+docker compose run --rm web /app/.venv/bin/python -m rusjango migrate
+docker compose up -d
+```
+
+Run the migration command only when ORM is enabled. Container settings disable debug and use a named volume for SQLite. Generated tests use an in-memory SQLite database per test.
+
+`remove docker` and `remove tests` delete only unchanged tracked files and preserve edits. Follow the [Docker guide](https://github.com/babar-xagi/Rusjango/blob/main/docs/14-docker.md) and [testing guide](https://github.com/babar-xagi/Rusjango/blob/main/docs/15-testing.md) for configuration.
+
 ## 🛠️ CLI at a glance
 
 Run these inside your project with `uv run rusjango`:
@@ -167,6 +185,8 @@ Run these inside your project with `uv run rusjango`:
 | `add orm` | Add SQLite configuration and ORM starter files |
 | `remove orm` | Disable ORM while keeping application files |
 | `migrate` | Create missing model tables |
+| `add docker` / `remove docker` | Add/remove unchanged tracked container files |
+| `add tests` / `remove tests` | Add/remove unchanged tracked pytest files |
 
 See the [CLI reference](https://github.com/babar-xagi/Rusjango/blob/main/docs/03-cli-reference.md) for flags, naming rules, and preservation behavior.
 
@@ -181,6 +201,8 @@ See the [CLI reference](https://github.com/babar-xagi/Rusjango/blob/main/docs/03
 | [Async ORM](https://github.com/babar-xagi/Rusjango/blob/main/docs/05-orm-guide.md) | Models, CRUD, SQLite, and PostgreSQL |
 | [Settings](https://github.com/babar-xagi/Rusjango/blob/main/docs/06-settings-reference.md) | Configure apps, middleware, and database access |
 | [Middleware](https://github.com/babar-xagi/Rusjango/blob/main/docs/07-middleware.md) | Wrap requests and use the built-in host checks |
+| [Docker](https://github.com/babar-xagi/Rusjango/blob/main/docs/14-docker.md) | Configure containers and persistent data |
+| [Application tests](https://github.com/babar-xagi/Rusjango/blob/main/docs/15-testing.md) | Run an ASGI client with isolated database fixtures |
 
 The [documentation home](https://github.com/babar-xagi/Rusjango/blob/main/docs/README.md) also links to architecture, internals, validation, and release guides.
 
@@ -201,7 +223,7 @@ uv run rusjango dev
 
 The repository pins Python 3.12. Set `UV_PYTHON=3.14` to use Python 3.14. Windows and WSL virtual environments cannot be shared.
 
-**Verified for 0.1.4:** 74 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust checks, distribution builds, and fresh PyPI installation checks passed. The release workflow passed all 22 jobs.
+**Phase 4 checks:** 122 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust checks, distribution builds, and fresh installed-wheel/generated-test checks passed. Container and hosted gates are recorded separately in the [Phase 4 validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/16-phase4-validation.md).
 
 [🤝 Contributing](https://github.com/babar-xagi/Rusjango/blob/main/docs/10-contributing.md) · [✅ Validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/11-validation.md)
 
@@ -209,11 +231,11 @@ The repository pins Python 3.12. Set `UV_PYTHON=3.14` to use Python 3.14. Window
 
 Rusjango is suitable for experimentation and contribution. It has one database configuration per process and no transaction API, relationships, or tracked schema migrations. SQLite needs **3.35+**. Request bodies are buffered in memory.
 
-Auth, admin, OpenAPI/Swagger generation, Docker scaffolding, application test scaffolding, workers, uploads, streaming, and supported WebSockets remain pending. There are no benchmarks proving a performance advantage.
+Auth, admin, OpenAPI/Swagger generation, workers, uploads, streaming, and supported WebSockets remain pending. There are no benchmarks proving a performance advantage.
 
 > 📌 **Upgrading an old database?** Earlier versions could use a default table named `model`. Back up the data and migrate it explicitly to the corrected table names. This release does not rename that table automatically.
 
-Follow [PROGRESS.md](https://github.com/babar-xagi/Rusjango/blob/main/PROGRESS.md) for implemented and planned phases, and the [0.1.4 release notes](https://github.com/babar-xagi/Rusjango/blob/main/docs/releases/0.1.4.md) for compatibility changes.
+Follow [PROGRESS.md](https://github.com/babar-xagi/Rusjango/blob/main/PROGRESS.md) for implemented and planned phases, and the [0.1.5 release notes](https://github.com/babar-xagi/Rusjango/blob/main/docs/releases/0.1.5.md) for compatibility changes.
 
 ## 📄 License
 

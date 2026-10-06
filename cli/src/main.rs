@@ -4,6 +4,7 @@ mod new;
 mod orm;
 mod project;
 mod remove;
+mod scaffolding;
 mod settings;
 
 use anyhow::Result;
@@ -63,6 +64,10 @@ enum AddTarget {
     App { name: String },
     /// Enable async ORM (SQLite by default)
     Orm,
+    /// Add Docker and production settings scaffolding
+    Docker,
+    /// Add isolated ASGI pytest scaffolding
+    Tests,
 }
 
 #[derive(Subcommand)]
@@ -76,6 +81,16 @@ enum RemoveTarget {
     },
     /// Disable ORM (keeps model files and migrations/)
     Orm {
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
+    /// Remove unchanged generated Docker files
+    Docker {
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
+    /// Remove unchanged generated test files
+    Tests {
         #[arg(long, short = 'y')]
         yes: bool,
     },
@@ -102,10 +117,14 @@ fn main() -> Result<()> {
         Commands::Add { target } => match target {
             AddTarget::App { name } => add::run(&name)?,
             AddTarget::Orm => orm::add_orm()?,
+            AddTarget::Docker => scaffolding::add("docker")?,
+            AddTarget::Tests => scaffolding::add("tests")?,
         },
         Commands::Remove { target } => match target {
             RemoveTarget::App { name, yes } => remove::run(&name, yes)?,
             RemoveTarget::Orm { yes } => orm::remove_orm(yes)?,
+            RemoveTarget::Docker { yes } => scaffolding::remove("docker", yes)?,
+            RemoveTarget::Tests { yes } => scaffolding::remove("tests", yes)?,
         },
     }
     Ok(())

@@ -1,6 +1,6 @@
 # ⚙️ Configure your application
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 The generated project stores runtime settings in `settings.py`. The application loads it with:
 
@@ -109,6 +109,8 @@ app = "main:app"
 `app` selects the object served by the development command. `settings` selects the file edited by app/ORM commands.
 
 If you rename the settings file, also update the `Rusjango(settings=...)` argument in your application code. That constructor does not infer its path from the CLI configuration.
+
+`RUSJANGO_SETTINGS` can override the settings path when an application supplies an explicit `settings=` argument. Bare `Rusjango()`/`Router()` instances do not inherit this override. The migration command also respects it. The Docker scaffold sets it to `settings_docker.py` so server and migration configuration agree.
 
 ## ✍️ CLI editing rules
 

@@ -1,6 +1,6 @@
 # 🤝 Contributing
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 Contributions should improve implemented behavior, preserve existing application code, and keep the documentation accurate.
 
@@ -71,7 +71,7 @@ uv run --all-packages --all-extras ruff check python/rusjango/src python/rusjang
 ```bash
 python scripts/check_release.py
 uv build --package rusjango
-.venv/bin/python scripts/verify_wheel.py dist/rusjango-0.1.4-cp311-abi3-linux_x86_64.whl
+.venv/bin/python scripts/verify_wheel.py dist/rusjango-0.1.5-cp311-abi3-linux_x86_64.whl
 ```
 
 Select the wheel for the version and platform you built. The helper installs it into a fresh environment and checks the native module, scaffold, migration, and API.

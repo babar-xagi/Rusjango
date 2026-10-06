@@ -11,33 +11,6 @@ import tomllib
 import pytest
 
 
-@pytest.fixture(params=["python", "rust"])
-def command(request, tmp_path):
-    if request.param == "rust":
-        binary = os.environ.get("RUSJANGO_RUST_CLI")
-        if not binary:
-            pytest.skip("Set RUSJANGO_RUST_CLI to exercise the compiled Rust CLI")
-        prefix = [str(Path(binary).resolve())]
-    else:
-        prefix = [sys.executable, "-m", "rusjango"]
-    env = {
-        **os.environ,
-        "PYTHONPATH": str(Path(__file__).parents[1] / "src"),
-        "UV_PROJECT_ENVIRONMENT": sys.prefix,
-        "UV_NO_SYNC": "1",
-        "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
-    }
-
-    def run(*args, cwd=tmp_path, success=True):
-        result = subprocess.run(
-            [*prefix, *args], cwd=cwd, env=env, capture_output=True, text=True
-        )
-        assert (result.returncode == 0) == success, result.stdout + result.stderr
-        return result
-
-    return run
-
-
 def test_add_remove_two_apps_preserves_settings(command, tmp_path):
     command("new", "sample")
     root = tmp_path / "sample"

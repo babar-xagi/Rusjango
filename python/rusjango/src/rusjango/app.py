@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import traceback
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -23,6 +24,8 @@ class Rusjango:
     """Main application object — ASGI 3.0 callable with route decorators."""
 
     def __init__(self, settings: str | None = None) -> None:
+        if settings is not None:
+            settings = os.environ.get("RUSJANGO_SETTINGS") or settings
         self.settings_path = settings
         self.settings: dict[str, Any] = load_settings(settings) if settings else {}
         self._routes: list[Route] = []

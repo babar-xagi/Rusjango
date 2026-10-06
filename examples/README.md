@@ -1,6 +1,6 @@
 # 🧪 School API example
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 The bundled example shows an app router, strict schemas, and SQLite CRUD using the workspace package.
 

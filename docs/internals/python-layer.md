@@ -1,6 +1,6 @@
 # 🐍 Python runtime internals
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 This page connects the public API to the implementation. For usage examples, start with [Routes and requests](../04-api-design.md).
 

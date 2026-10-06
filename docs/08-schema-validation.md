@@ -1,6 +1,6 @@
 # ✅ Schemas and validation
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 A `Schema` describes the fields your API accepts using Python type annotations. Rusjango validates those fields before calling a handler.
 
@@ -136,17 +136,91 @@ except SchemaValidationError as exc:
 
 ## 📋 Supported types
 
+### 🎯 Field constraints
+
+Use `Field` from `rusjango` for schema constraints. ORM fields remain separate classes in `rusjango.orm`.
+
+```python
+from rusjango import Field
+
+
+class Order(Schema):
+    title: str = Field(min_length=2, max_length=100)
+    quantity: int = Field(default=1, ge=1, le=100)
+    tags: list[str] = Field(default=[], max_length=10)
+```
+
+`ge`, `gt`, `le`, and `lt` constrain numeric values. `min_length` and `max_length` work on strings, lists, and dictionaries. `pattern` performs a full regex match on a string. Nullable values skip constraints when their annotation permits None.
+
+`Field()` without a default is required. Field defaults are copied per instance.
+
+### 🔄 Opt-in coercion and field validators
+
+Strict validation stays the default. Enable controlled conversions on a schema explicitly:
+
+```python
+from rusjango import field_validator
+
+
+class Signup(Schema):
+    __coerce__ = True
+    name: str = Field(min_length=2)
+    age: int = Field(ge=18, le=120)
+
+    @field_validator("name")
+    def trim_name(value):
+        return value.strip()
+
+
+signup = Signup.from_dict({"name": " Ada ", "age": "22"})
+assert signup.dict() == {"name": "Ada", "age": 22}
+```
+
+The decorator creates a static value-to-value function; do not add `self`, `cls`, or a classmethod decorator. A validator may transform its value or raise `ValueError` with a useful message. Its output is type-checked without coercion before Field constraints are checked.
+
+Validators are inherited. Overriding a method by name replaces that inherited validator. Multiple field validators run in declaration/MRO order. Defaults run through the same checks.
+
+| Target | Coercion with `__coerce__ = True` |
+|---|---|
+| `int` | Signed integer strings, with surrounding whitespace stripped |
+| `float` | Numeric strings; result must be finite |
+| `bool` | true/false, yes/no, on/off, 1/0 strings; case-insensitive |
+| Lists/dictionaries | Apply that policy to their annotated elements |
+| Nested Schema | Uses that nested class's own coercion setting |
+
+Booleans and fractional numbers are never converted to integers. Values are not stringified into `str` fields. Unions prefer an exact match before trying conversions, so `int | str` keeps `"22"` as a string. Dictionary keys that collide after conversion are rejected.
+
+Float fields reject NaN, infinity, and overflow even in strict mode. Private annotations and ClassVar metadata are not serialized fields.
+
+### 🧱 Cross-field validation
+
+Override `validate()` to check the fully validated object:
+
+```python
+class Interval(Schema):
+    start: int
+    end: int
+
+    def validate(self):
+        if self.end < self.start:
+            raise ValueError("end must not precede start")
+```
+
+The hook is synchronous and returns None. A ValueError becomes a model-level validation failure; in a handler body its location identifies the body parameter. Field-validator failures identify the field.
+
+Use ValueError for invalid input. Invalid validator configuration and programming errors are not converted into validation failures.
+
 | Type | Supported |
 |---|---|
 | `str`, `int`, `float`, `bool`, `None`, `Any` | Yes |
 | Unions, including `int | None` | Yes |
 | Other `Schema` subclasses | Yes |
 | Typed lists and dictionaries | Yes |
-| Field validators and numeric/length constraints | Pending |
+| Field validators, cross-field checks, and Field constraints | Yes |
 | Literal, enums, dates, arbitrary generic containers | Pending |
 | Automatic JSON Schema/OpenAPI generation | Pending |
 
-Use strict JSON types today. Expanded validation remains part of Phase 4.
+Strict JSON types are the default. Coercion and validators are explicit extensions; generated JSON Schema/OpenAPI remains pending.
 
 ---
 

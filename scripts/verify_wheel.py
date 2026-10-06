@@ -14,11 +14,22 @@ import asyncio
 import importlib.metadata
 import json
 import rusjango
+from rusjango import Field, Schema, field_validator
 from main import app
 from rusjango.orm import close_db
 
 assert rusjango._core is not None
 assert rusjango.__version__ == importlib.metadata.version("rusjango")
+
+class Input(Schema):
+    __coerce__ = True
+    count: int = Field(ge=1)
+    name: str = Field(min_length=2)
+    @field_validator("name")
+    def trim(value):
+        return value.strip()
+
+assert Input(count="2", name=" Ali ").dict() == {"count": 2, "name": "Ali"}
 
 async def request(method, body=b""):
     messages = []
@@ -70,11 +81,43 @@ def main() -> None:
             check=True,
         )
         project = root / "demo"
-        for args in [["add", "app", "school"], ["add", "orm"], ["migrate"]]:
+        for args in [
+            ["add", "app", "school"],
+            ["add", "orm"],
+            ["migrate"],
+            ["add", "docker"],
+            ["add", "tests"],
+        ]:
             subprocess.run(
                 [str(python), "-m", "rusjango", *args], cwd=project, env=env, check=True
             )
         subprocess.run([str(python), "-c", SMOKE], cwd=project, env=env, check=True)
+        subprocess.run(
+            [
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                str(python),
+                "pytest",
+                "pytest-asyncio",
+            ],
+            env=env,
+            check=True,
+        )
+        subprocess.run(
+            [str(python), "-m", "pytest", "tests", "-q"],
+            cwd=project,
+            env=env,
+            check=True,
+        )
+        for feature in ("docker", "tests"):
+            subprocess.run(
+                [str(python), "-m", "rusjango", "remove", feature, "--yes"],
+                cwd=project,
+                env=env,
+                check=True,
+            )
 
 
 if __name__ == "__main__":

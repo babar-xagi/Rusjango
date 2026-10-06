@@ -1,8 +1,8 @@
 # 🦀 Rust internals
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
-The workspace contains `rusjango-cli` and `rusjango-core`. Both inherit version **0.1.4** from the workspace.
+The workspace contains `rusjango-cli` and `rusjango-core`. Both inherit version **0.1.5** from the workspace.
 
 ## 📦 Native extension
 

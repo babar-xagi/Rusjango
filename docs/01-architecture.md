@@ -1,6 +1,6 @@
 # 🏗️ Architecture
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 This reference explains where each component lives and how a request moves through the framework. Start with the [tutorial](02-getting-started.md) if you are new to Rusjango.
 

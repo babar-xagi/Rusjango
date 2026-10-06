@@ -83,3 +83,5 @@ jobs:
       - name: Install wheel in a fresh environment and exercise generated API
         shell: bash
         run: .venv/bin/python scripts/verify_wheel.py dist/*.whl
+      - name: Build and exercise generated Docker application
+        run: .venv/bin/python scripts/verify_docker.py dist/*.whl

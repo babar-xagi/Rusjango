@@ -1,6 +1,6 @@
 # 🧩 Organize your API into apps
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 An application groups related endpoints into its own Python package. This tutorial continues inside the `demo` project from [First steps](02-getting-started.md).
 

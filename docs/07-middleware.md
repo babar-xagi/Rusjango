@@ -1,6 +1,6 @@
 # 🛡️ Middleware and host checks
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 Middleware wraps an ASGI application to inspect requests or responses. Configure it with dotted class paths in `settings.py`.
 
@@ -102,4 +102,4 @@ Built-in auth, CORS, CSRF, sessions, rate limiting, and HTTPS redirection are pe
 
 ---
 
-[← Settings](06-settings-reference.md) · [📚 Documentation home](README.md) · [CLI reference →](03-cli-reference.md)
+[← Settings](06-settings-reference.md) · [📚 Documentation home](README.md) · [Next: Docker →](14-docker.md)

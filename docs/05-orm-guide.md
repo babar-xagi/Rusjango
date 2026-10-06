@@ -1,6 +1,6 @@
 # 🗃️ Work with the async ORM
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 The ORM provides async create, read, update, and delete operations for SQLite and PostgreSQL.
 
@@ -160,7 +160,7 @@ async def require_student(student_id: int):
 Install the optional driver into the project environment:
 
 ```bash
-uv add "rusjango[postgres]==0.1.4"
+uv add "rusjango[postgres]==0.1.5"
 ```
 
 Then replace `DATABASE` in `settings.py`:

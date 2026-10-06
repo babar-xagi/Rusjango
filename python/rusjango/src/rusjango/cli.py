@@ -484,6 +484,31 @@ def _cmd_migrate(args: argparse.Namespace) -> None:  # noqa: ARG001
     sys.exit(result.returncode)
 
 
+def _cmd_add_feature(args: argparse.Namespace) -> None:
+    from rusjango.scaffolding import add_feature
+
+    changed = add_feature(_find_project_root(), args.target)
+    print(f"{args.target} scaffold {'added' if changed else 'already tracked'}.")
+    if args.target == "tests":
+        print("Run: uv run --with pytest --with pytest-asyncio pytest tests")
+    else:
+        print("Set ALLOWED_HOSTS, then run: docker compose up --build")
+
+
+def _cmd_remove_feature(args: argparse.Namespace) -> None:
+    from rusjango.scaffolding import remove_feature
+
+    if not args.yes and not _confirm(
+        f"Remove unchanged generated {args.target} files?"
+    ):
+        print("Aborted.")
+        return
+    kept = remove_feature(_find_project_root(), args.target)
+    print(f"{args.target} scaffold removed.")
+    for name in kept:
+        print(f"Preserved modified file: {name}")
+
+
 # ── Argument parser ───────────────────────────────────────────────────────────
 
 
@@ -540,6 +565,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p = add_sub.add_parser("orm", help="Enable async ORM with SQLite (default)")
     p.set_defaults(func=_cmd_add_orm)
 
+    for target in ("docker", "tests"):
+        p = add_sub.add_parser(
+            target, help=f"Add {target} scaffolding without overwriting files"
+        )
+        p.set_defaults(func=_cmd_add_feature)
+
     # ── remove ───────────────────────────────────────────────────────────
     p_remove = sub.add_parser("remove", help="Remove a feature or app from the project")
     remove_sub = p_remove.add_subparsers(dest="target", metavar="<target>")
@@ -557,6 +588,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
     p.set_defaults(func=_cmd_remove_orm)
+
+    for target in ("docker", "tests"):
+        p = remove_sub.add_parser(
+            target, help=f"Remove unchanged generated {target} files"
+        )
+        p.add_argument(
+            "-y", "--yes", action="store_true", help="Skip confirmation prompt"
+        )
+        p.set_defaults(func=_cmd_remove_feature)
 
     # ── migrate ──────────────────────────────────────────────────────────
     p = sub.add_parser("migrate", help="Create database tables from registered models")

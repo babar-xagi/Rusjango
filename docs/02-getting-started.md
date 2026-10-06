@@ -1,6 +1,6 @@
 # 🚀 First steps
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 In this tutorial, you will install Rusjango, create a project, start the server, and check your first JSON response.
 
@@ -17,7 +17,7 @@ Published wheels cover Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/ar
 Use uv to run the CLI in an isolated tool environment:
 
 ```bash
-uvx --from rusjango==0.1.4 rusjango new demo
+uvx --from rusjango==0.1.5 rusjango new demo
 cd demo
 uv sync
 ```
@@ -57,7 +57,7 @@ py -m venv .venv
 Then:
 
 ```bash
-python -m pip install rusjango==0.1.4
+python -m pip install rusjango==0.1.5
 python -m rusjango new demo
 cd demo
 python -m rusjango dev

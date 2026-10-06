@@ -1,6 +1,6 @@
 # 🛠️ CLI reference
 
-**Rusjango 0.1.4 · Alpha**
+**Rusjango 0.1.5 · Alpha**
 
 Inside a uv-managed project, use `uv run rusjango`. In an activated pip environment, use `python -m rusjango`. A standalone Rust binary exposes the same commands.
 
@@ -23,11 +23,13 @@ uv run rusjango add app --help
 | `add orm` | Configure SQLite if disabled and add ORM starter files |
 | `remove orm [--yes]` | Set DATABASE to None and keep application files |
 | `migrate` | Create missing model tables; return nonzero on failure |
+| `add docker` / `remove docker [--yes]` | Add container settings and remove only unchanged tracked Docker files |
+| `add tests` / `remove tests [--yes]` | Add isolated ASGI pytest files and remove only unchanged tracked files |
 
 ### 🚀 New project
 
 ```bash
-uvx --from rusjango==0.1.4 rusjango new demo
+uvx --from rusjango==0.1.5 rusjango new demo
 ```
 
 The destination must not already exist. Project names accept letters, digits, hyphens, and underscores.
@@ -91,7 +93,24 @@ Changing the CLI settings path also requires changing the application's explicit
 
 The settings editor supports literal string lists and dictionary/None database assignments. Computed values are rejected before app/ORM scaffolding. Edited-value comments and formatting may change; unrelated file contents are preserved.
 
-## 🦀 Rust CLI
+## 🐳 Docker and test scaffolds
+
+```bash
+uv run rusjango add docker
+uv run rusjango add tests
+uv run --with pytest --with pytest-asyncio pytest tests
+```
+
+These commands preserve dependency files and base settings. Conflicting files stop the operation. The shared `.rusjango-features.json` manifest records original content, so edited files remain intact during removal and either CLI can manage the same scaffold.
+
+```bash
+uv run rusjango remove docker
+uv run rusjango remove tests
+```
+
+Removal prompts by default. `--yes` skips the prompt and still preserves modified files. Keep the manifest with generated files in version control. Container images, running services, and data volumes are not removed by these commands.
+
+Follow the [Docker](14-docker.md) and [testing](15-testing.md) guides for setup and scope.
 
 Rust embeds templates at compile time, so its installed binary does not need a checkout. Dev/migrate prefer uv and fall back to Python when uv is unavailable.
 
@@ -99,7 +118,7 @@ The Python package includes the full Python CLI; the separate Rust binary is opt
 
 ## 🧭 Commands still pending
 
-Auth, admin, Docker, application test scaffolding, workers, AI, and payments commands are not implemented.
+Auth, admin, workers, AI, and payments commands are not implemented.
 
 ---
 

@@ -7,6 +7,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.5] - 2026-10-06
+
+### Added
+
+- Opt-in coercion, Field range/length/pattern constraints, field validators, and cross-field validation.
+- Docker/test add/remove commands in both CLIs with shared packaged templates and ownership-aware preservation.
+- Production container configuration, isolated ASGI pytest fixtures, and Docker/distribution checks.
+
+### Compatibility
+
+- Strict validation stays the default; float fields reject non-finite values and overflow.
+- Private annotations and ClassVar metadata are not schema fields.
+- RUSJANGO_SETTINGS selects an override for explicit application settings and migrations.
+
+See [release notes](docs/releases/0.1.5.md) for scope and validation.
+
 ## [0.1.4] - 2026-10-05
 
 ### Fixed
@@ -88,3 +104,5 @@ First public release. Phases 1–3 complete.
 [0.1.0]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.0
 
 [0.1.4]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.4
+
+[0.1.5]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.5

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import os
 import sys
 from pathlib import Path
 
@@ -28,7 +29,9 @@ def main(argv: list[str] | None = None) -> None:
 
     root = find_project_root()
     config = load_rusjango_config(root)
-    settings_path = root / config.get("settings", "settings.py")
+    settings_path = root / (
+        os.environ.get("RUSJANGO_SETTINGS") or config.get("settings", "settings.py")
+    )
     settings = load_settings(settings_path)
 
     database = settings.get("DATABASE")
