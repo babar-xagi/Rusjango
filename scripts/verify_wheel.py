@@ -15,6 +15,7 @@ import importlib.metadata
 import json
 import rusjango
 from rusjango import Field, Schema, field_validator
+from rusjango.admin import AdminIdentity, AdminPermissionDenied
 from main import app
 from rusjango.orm import close_db
 
@@ -47,6 +48,19 @@ async def main():
         assert status == 200 and isinstance(created["id"], int) and created["age"] is None
         assert (await request("GET"))[1] == [created]
         assert (await request("POST", b'{"name":123}'))[0] == 422
+        actor = AdminIdentity("staff", frozenset(f"admin:school.student:{action}" for action in ("view", "add", "change", "delete")))
+        site = app.admin_site
+        assert site.catalog(identity=actor)[0]["label"] == "school.student"
+        assert (await site.list("school.student", identity=actor))["items"] == [{"id": created["id"], "name": "Ali"}]
+        try:
+            await site.list("school.student")
+        except AdminPermissionDenied:
+            pass
+        else:
+            raise AssertionError("Unauthenticated admin access accepted")
+        added = await site.create("school.student", {"name": "Sara"}, identity=actor)
+        assert (await site.update("school.student", added["id"], {"name": "Ada"}, identity=actor))["name"] == "Ada"
+        assert await site.delete("school.student", added["id"], identity=actor) == 1
     finally:
         await close_db()
 
@@ -87,10 +101,28 @@ def main() -> None:
             ["migrate"],
             ["add", "docker"],
             ["add", "tests"],
+            ["add", "admin"],
         ]:
             subprocess.run(
                 [str(python), "-m", "rusjango", *args], cwd=project, env=env, check=True
             )
+        settings = project / "settings.py"
+        settings.write_text(
+            settings.read_text().replace(
+                "ADMIN = None", 'ADMIN = {"FACTORY": "admin:create_site"}'
+            )
+        )
+        (
+            project / "apps/school/admin.py"
+        ).write_text("""from rusjango import Field, Schema
+from .models import Student
+from .schemas import StudentCreate
+class Rename(Schema):
+    name: str = Field(min_length=1, max_length=100)
+def register(site):
+    site.register(Student, list_display=("id", "name"), detail_fields=("id", "name", "age"),
+                  create_schema=StudentCreate, update_schema=Rename, allow_delete=True)
+""")
         subprocess.run([str(python), "-c", SMOKE], cwd=project, env=env, check=True)
         subprocess.run(
             [
@@ -111,7 +143,7 @@ def main() -> None:
             env=env,
             check=True,
         )
-        for feature in ("docker", "tests"):
+        for feature in ("docker", "tests", "admin"):
             subprocess.run(
                 [str(python), "-m", "rusjango", "remove", feature, "--yes"],
                 cwd=project,

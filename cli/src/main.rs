@@ -68,6 +68,8 @@ enum AddTarget {
     Docker,
     /// Add isolated ASGI pytest scaffolding
     Tests,
+    /// Add explicit admin registry scaffolding for server-side use
+    Admin,
 }
 
 #[derive(Subcommand)]
@@ -91,6 +93,11 @@ enum RemoveTarget {
     },
     /// Remove unchanged generated test files
     Tests {
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
+    /// Remove unchanged generated admin scaffolding
+    Admin {
         #[arg(long, short = 'y')]
         yes: bool,
     },
@@ -119,12 +126,14 @@ fn main() -> Result<()> {
             AddTarget::Orm => orm::add_orm()?,
             AddTarget::Docker => scaffolding::add("docker")?,
             AddTarget::Tests => scaffolding::add("tests")?,
+            AddTarget::Admin => scaffolding::add("admin")?,
         },
         Commands::Remove { target } => match target {
             RemoveTarget::App { name, yes } => remove::run(&name, yes)?,
             RemoveTarget::Orm { yes } => orm::remove_orm(yes)?,
             RemoveTarget::Docker { yes } => scaffolding::remove("docker", yes)?,
             RemoveTarget::Tests { yes } => scaffolding::remove("tests", yes)?,
+            RemoveTarget::Admin { yes } => scaffolding::remove("admin", yes)?,
         },
     }
     Ok(())

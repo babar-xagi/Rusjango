@@ -1,6 +1,6 @@
 # 📦 Release procedure
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 Releases use GitHub Actions and the repository's configured `PYPI_API_TOKEN` secret in the `pypi` environment. Local PyPI credentials are not required. Publication and release creation require an explicit maintainer request.
 
@@ -12,9 +12,9 @@ Releases use GitHub Actions and the repository's configured `PYPI_API_TOKEN` sec
 4. Run the full suite with both CLIs and live PostgreSQL, Rust formatting/tests/clippy, Python formatting/lint, and distribution checks.
 
 ```bash
-python scripts/check_release.py v0.1.5
+python scripts/check_release.py v0.1.6
 uv build --package rusjango
-.venv/bin/python scripts/verify_wheel.py dist/rusjango-0.1.5-cp311-abi3-linux_x86_64.whl
+.venv/bin/python scripts/verify_wheel.py dist/rusjango-0.1.6-cp311-abi3-linux_x86_64.whl
 ```
 
 Select the exact wheel when dist contains older builds. The example wheel name applies to the local Linux build; the workflow creates portable platform wheels.

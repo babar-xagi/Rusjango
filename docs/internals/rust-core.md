@@ -1,8 +1,8 @@
 # 🦀 Rust internals
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
-The workspace contains `rusjango-cli` and `rusjango-core`. Both inherit version **0.1.5** from the workspace.
+The workspace contains `rusjango-cli` and `rusjango-core`. Both inherit version **0.1.6** from the workspace.
 
 ## 📦 Native extension
 
@@ -28,6 +28,8 @@ Use an absolute interpreter path when system Python lacks its development librar
 Clap handles command parsing. Templates are embedded with `include_str!` at compile time, so the installed binary does not read source-checkout templates.
 
 Project detection parses TOML. Literal app lists and DATABASE assignments are edited within value ranges while preserving unrelated settings.
+
+Docker, tests, and admin profiles embed the canonical Python-package templates. The shared manifest records original generated content so either CLI preserves edited files during removal.
 
 The Rust editor is intentionally a limited literal-settings editor. Unsupported computed values are rejected; comments inside edited values may be lost.
 

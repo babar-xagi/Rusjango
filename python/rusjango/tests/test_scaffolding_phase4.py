@@ -9,7 +9,7 @@ import sys
 import pytest
 
 
-@pytest.mark.parametrize("feature", ["docker", "tests"])
+@pytest.mark.parametrize("feature", ["docker", "tests", "admin"])
 def test_feature_removal_preserves_modified_and_unrelated_files(
     command, tmp_path, feature
 ):
@@ -34,7 +34,8 @@ def test_feature_removal_preserves_modified_and_unrelated_files(
 
 
 @pytest.mark.parametrize(
-    "feature,conflict", [("docker", "Dockerfile"), ("tests", "tests/conftest.py")]
+    "feature,conflict",
+    [("docker", "Dockerfile"), ("tests", "tests/conftest.py"), ("admin", "admin.py")],
 )
 def test_conflict_preflight_does_not_partially_scaffold(
     command, tmp_path, feature, conflict

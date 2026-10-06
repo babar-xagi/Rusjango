@@ -79,3 +79,50 @@ async def test_postgres_connection_reusable_after_constraint_error(postgres_mode
     with pytest.raises(asyncpg.UniqueViolationError):
         await Book.create(title="unique")
     assert (await Book.create(title="after-error")).id is not None
+
+
+async def test_admin_views_and_writes_on_real_postgres(postgres_models):
+    from rusjango import Schema
+    from rusjango.admin import AdminIdentity, AdminSite
+
+    Book, _ = postgres_models
+
+    class Create(Schema):
+        title: str
+        active: bool = True
+
+    class Update(Schema):
+        active: bool
+
+    site = AdminSite()
+    site.register(
+        Book,
+        label="book",
+        list_display=("id", "title", "active"),
+        list_filter=("active", "id"),
+        search_fields=("title",),
+        create_schema=Create,
+        update_schema=Update,
+        allow_delete=True,
+    )
+    actor = AdminIdentity(
+        "staff",
+        frozenset(
+            f"admin:book:{action}" for action in ("view", "add", "change", "delete")
+        ),
+    )
+    created = await site.create("book", {"title": "100%_literal"}, identity=actor)
+    await site.create("book", {"title": "other"}, identity=actor)
+    page = await site.list(
+        "book",
+        identity=actor,
+        search="%_",
+        filters={"id__gte": 1, "active": True},
+        sort="-title",
+    )
+    assert page["items"] == [created]
+    updated = await site.update(
+        "book", created["id"], {"active": False}, identity=actor
+    )
+    assert updated["active"] is False
+    assert await site.delete("book", created["id"], identity=actor) == 1

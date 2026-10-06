@@ -1,6 +1,6 @@
 # ✅ Schemas and validation
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 A `Schema` describes the fields your API accepts using Python type annotations. Rusjango validates those fields before calling a handler.
 

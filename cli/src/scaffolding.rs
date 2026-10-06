@@ -40,11 +40,16 @@ const TESTS: &[(&str, &str)] = &[
         include_str!("../../python/rusjango/src/rusjango/templates/tests/test_health.py.tpl"),
     ),
 ];
+const ADMIN: &[(&str, &str)] = &[(
+    "admin.py",
+    include_str!("../../python/rusjango/src/rusjango/templates/admin/admin.py.tpl"),
+)];
 
 fn profile(feature: &str) -> Result<&'static [(&'static str, &'static str)]> {
     match feature {
         "docker" => Ok(DOCKER),
         "tests" => Ok(TESTS),
+        "admin" => Ok(ADMIN),
         _ => bail!("Unknown scaffold: {feature}"),
     }
 }
@@ -171,8 +176,10 @@ pub fn add(feature: &str) -> Result<()> {
     println!("{feature} scaffold added.");
     if feature == "tests" {
         println!("Run: uv run --with pytest --with pytest-asyncio pytest tests");
-    } else {
+    } else if feature == "docker" {
         println!("Set ALLOWED_HOSTS, then run: docker compose up --build");
+    } else {
+        println!("Configure ADMIN = {{'FACTORY': 'admin:create_site'}} and register explicit model fields.");
     }
     Ok(())
 }

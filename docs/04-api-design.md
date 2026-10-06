@@ -1,6 +1,6 @@
 # 🌐 Routes and requests
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 A route connects an HTTP method and URL path to an async Python function. This guide builds on the generated project from [First steps](02-getting-started.md).
 

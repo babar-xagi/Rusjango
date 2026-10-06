@@ -7,6 +7,24 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.6] - 2026-10-06
+
+### Added
+
+- Independent admin registries, synchronous factories, and optional app discovery.
+- Permission-gated catalog/list/detail services with explicit field projection, bounded pagination, strict filters, stable sorting, and literal search.
+- Read-only defaults, opt-in typed writes, protected primary keys, and form metadata without default values.
+- Shared admin add/remove scaffold in Python and Rust CLIs, with conflict checks and preservation of edits.
+- Admin regressions on SQLite/PostgreSQL, fresh-wheel and Docker checks, and tutorial/reference documentation.
+
+### Compatibility
+
+- ADMIN accepts None or exactly a synchronous FACTORY configuration.
+- AdminIdentity is supplied by trusted server code; authentication, login, and browser routes remain pending.
+- Admin write inputs reject unknown fields. Existing API schema behavior is unchanged.
+
+See [release notes](docs/releases/0.1.6.md) and [validation](docs/18-phase5-validation.md).
+
 ## [0.1.5] - 2026-10-06
 
 ### Added
@@ -105,4 +123,5 @@ First public release. Phases 1–3 complete.
 
 [0.1.4]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.4
 
+[0.1.6]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.6
 [0.1.5]: https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.5

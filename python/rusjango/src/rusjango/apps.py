@@ -32,3 +32,6 @@ def load_installed_apps(app: Rusjango) -> None:
             except ModuleNotFoundError as exc:
                 if exc.name != f"{dotted}.models":
                     raise
+
+    if app.settings.get("ADMIN") is not None or app.admin_site is not None:
+        app.load_admin()

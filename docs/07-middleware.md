@@ -1,6 +1,6 @@
 # 🛡️ Middleware and host checks
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 Middleware wraps an ASGI application to inspect requests or responses. Configure it with dotted class paths in `settings.py`.
 

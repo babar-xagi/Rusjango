@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import os
 import traceback
 from collections.abc import Awaitable, Callable
@@ -31,6 +33,8 @@ class Rusjango:
         self._routes: list[Route] = []
         self._loaded_apps: set[str] = set()
         self._asgi_app: ASGIApp | None = None
+        self.admin_site = None
+        self._admin_factory_path = None
         if self.settings.get("DATABASE"):
             from rusjango.orm.connection import configure_db
 
@@ -80,6 +84,42 @@ class Rusjango:
         from rusjango.apps import load_installed_apps as _load
 
         _load(self)
+
+    def load_admin(self):
+        """Load a per-app admin registry without mounting HTTP routes."""
+        from rusjango.admin import AdminSite
+
+        config = self.settings.get("ADMIN")
+        if config is None:
+            self.admin_site = None
+            self._admin_factory_path = None
+            return None
+        if not isinstance(config, dict) or set(config) != {"FACTORY"}:
+            raise ValueError("ADMIN must be None or {'FACTORY': 'module:function'}")
+        path = config["FACTORY"]
+        if not isinstance(path, str) or ":" not in path:
+            raise ValueError("Admin factory must use module:attribute syntax")
+        if self.admin_site is not None and path == self._admin_factory_path:
+            self.admin_site.autodiscover(self.settings.get("INSTALLED_APPS") or [])
+            return self.admin_site
+        module, attribute = path.split(":", 1)
+        factory = importlib.import_module(module)
+        for part in attribute.split("."):
+            factory = getattr(factory, part)
+        if not callable(factory):
+            raise TypeError("Admin factory must be callable")
+        if inspect.iscoroutinefunction(factory):
+            raise TypeError("Admin factory must be synchronous")
+        site = factory(self)
+        if inspect.isawaitable(site):
+            if inspect.iscoroutine(site):
+                site.close()
+            raise TypeError("Admin factory must be synchronous")
+        if not isinstance(site, AdminSite):
+            raise TypeError("Admin factory must return AdminSite")
+        site.autodiscover(self.settings.get("INSTALLED_APPS") or [])
+        self.admin_site, self._admin_factory_path = site, path
+        return site
 
     def _build_asgi(self) -> ASGIApp:
         if self._asgi_app is not None:

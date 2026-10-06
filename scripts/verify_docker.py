@@ -29,13 +29,28 @@ def main() -> None:
             check=True,
         )
         project = root / "demo"
-        for args in [("add", "app", "school"), ("add", "orm"), ("add", "docker")]:
+        for args in [
+            ("add", "app", "school"),
+            ("add", "orm"),
+            ("add", "docker"),
+            ("add", "admin"),
+        ]:
             subprocess.run(
                 [sys.executable, "-m", "rusjango", *args],
                 cwd=project,
                 env=env,
                 check=True,
             )
+        settings = project / "settings.py"
+        settings.write_text(
+            settings.read_text().replace(
+                "ADMIN = None", 'ADMIN = {"FACTORY": "admin:create_site"}'
+            )
+        )
+        (project / "apps/school/admin.py").write_text("""from .models import Student
+def register(site):
+    site.register(Student, list_display=("id", "name"))
+""")
         vendor = project / "vendor"
         vendor.mkdir()
         shutil.copy2(wheel, vendor / wheel.name)
@@ -94,6 +109,7 @@ def main() -> None:
                         raise
                     time.sleep(0.5)
             assert request(port, host="disallowed.example")[0] == 400
+            assert request(port, path="/admin")[0] == 404
             status, error = request(port, path="/api/school/students")
             assert (
                 status == 500 and "detail" not in error
@@ -119,6 +135,14 @@ def main() -> None:
                 "/app/.venv/bin/python",
                 "-c",
                 "import os; assert os.geteuid() == 10001",
+            )
+            run(
+                "exec",
+                "-T",
+                "web",
+                "/app/.venv/bin/python",
+                "-c",
+                "from docker_app import app; from rusjango.admin import AdminIdentity; assert app.admin_site.catalog(identity=AdminIdentity('staff', frozenset({'admin:school.student:view'})))[0]['label'] == 'school.student'",
             )
             run("restart", "web")
             port = (

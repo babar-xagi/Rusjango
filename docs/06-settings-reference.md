@@ -1,6 +1,6 @@
 # ⚙️ Configure your application
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 The generated project stores runtime settings in `settings.py`. The application loads it with:
 
@@ -94,7 +94,20 @@ With `SecurityMiddleware` enabled:
 | `MIDDLEWARE` | Ordered list of ASGI middleware classes |
 | `DATABASE` | None, SQLite, or PostgreSQL configuration |
 | `SECRET_KEY` | Reserved; the framework currently does not use it for signing/auth |
-| `AUTH`, `ADMIN`, `AI`, `WORKER`, `PAYMENTS` | Reserved placeholders with no implemented feature behavior |
+| `ADMIN` | None or a synchronous AdminSite factory configuration |
+| `AUTH`, `AI`, `WORKER`, `PAYMENTS` | Reserved placeholders with no implemented feature behavior |
+
+## 🛡️ Admin factory
+
+```python
+ADMIN = {"FACTORY": "admin:create_site"}
+```
+
+The synchronous callable receives the application and must return `rusjango.admin.AdminSite`. `app.load_installed_apps()` loads the factory and optional `register(site)` callbacks from installed packages' admin modules.
+
+Only `FACTORY` is accepted. `ADMIN = None` disables the site. Each application has an independent registry; repeated loads reuse its factory result and successful registrations. No HTTP routes or authentication provider are installed.
+
+`add admin` creates the factory scaffold and preserves settings. Before removing the referenced scaffold, set `ADMIN = None` yourself. See the [admin guide](17-admin.md).
 
 ## 📄 Project entry point
 

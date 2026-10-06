@@ -1,6 +1,6 @@
 # 🐳 Run with Docker
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 The Docker scaffold supplies a multi-stage image, Compose configuration, an ASGI entry point, and production-oriented settings. This guide continues with the school ORM app from the [ORM tutorial](05-orm-guide.md).
 

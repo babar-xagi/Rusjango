@@ -18,6 +18,7 @@ PROFILES = {
         "docker_app.py",
     ],
     "tests": ["tests/conftest.py", "tests/test_health.py"],
+    "admin": ["admin.py"],
 }
 
 

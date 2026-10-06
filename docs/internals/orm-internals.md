@@ -1,6 +1,6 @@
 # 🗃️ ORM internals
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 Read the [ORM tutorial](../05-orm-guide.md) for usage. This reference explains model metadata, SQL generation, and connection handling.
 

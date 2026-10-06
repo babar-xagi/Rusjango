@@ -1,6 +1,6 @@
 # 🧪 Test your application
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 The test scaffold provides a small asynchronous ASGI client and a starter endpoint test. It uses pytest and pytest-asyncio.
 

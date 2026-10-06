@@ -11,7 +11,7 @@
 
 Rusjango is an async Python web framework that starts with a three-file project. Write a route, add an application, and enable a database when you need one.
 
-> 🧪 **Version 0.1.5 · Alpha.** Routing, validation extensions, app/ORM/Docker/test scaffolding, and basic async ORM are implemented. The Rust CLI works today; the native runtime extension is a placeholder. Request handling currently runs in Python.
+> 🧪 **Version 0.1.6 · Alpha.** Routing, validation, app/ORM/Docker/test/admin scaffolding, basic async ORM, and admin backend services are implemented. The Rust CLI works today; the native runtime extension is a placeholder. Request handling currently runs in Python.
 
 ## ✨ What you can build with it
 
@@ -25,6 +25,7 @@ Rusjango is an async Python web framework that starts with a three-file project.
 | **Middleware** | ASGI middleware, Host validation, and basic security headers |
 | **Two CLIs** | Python CLI in the package and a standalone Rust CLI |
 | **Docker and tests** | Nonroot container scaffold and isolated ASGI pytest fixture |
+| **Admin foundations** | Explicit model fields and permission-gated server-side data services |
 
 ## 🚀 Quick start
 
@@ -33,7 +34,7 @@ You need **Python 3.11+** and [uv](https://docs.astral.sh/uv/getting-started/ins
 ### 1. Create your project
 
 ```bash
-uvx --from rusjango==0.1.5 rusjango new demo
+uvx --from rusjango==0.1.6 rusjango new demo
 cd demo
 uv sync
 ```
@@ -172,6 +173,16 @@ Run the migration command only when ORM is enabled. Container settings disable d
 
 `remove docker` and `remove tests` delete only unchanged tracked files and preserve edits. Follow the [Docker guide](https://github.com/babar-xagi/Rusjango/blob/main/docs/14-docker.md) and [testing guide](https://github.com/babar-xagi/Rusjango/blob/main/docs/15-testing.md) for configuration.
 
+## 🛡️ Register models for admin services
+
+```bash
+uv run rusjango add admin
+```
+
+Set `ADMIN = {"FACTORY": "admin:create_site"}` in `settings.py`, then register explicit model fields in `apps/school/admin.py`. The site provides a catalog, paginated lists, details, and optional typed writes for trusted server callers.
+
+No dashboard or HTTP admin routes are installed. Follow the [admin tutorial](https://github.com/babar-xagi/Rusjango/blob/main/docs/17-admin.md) for registration and exact permission grants.
+
 ## 🛠️ CLI at a glance
 
 Run these inside your project with `uv run rusjango`:
@@ -187,6 +198,7 @@ Run these inside your project with `uv run rusjango`:
 | `migrate` | Create missing model tables |
 | `add docker` / `remove docker` | Add/remove unchanged tracked container files |
 | `add tests` / `remove tests` | Add/remove unchanged tracked pytest files |
+| `add admin` / `remove admin` | Add/remove the tracked admin factory scaffold |
 
 See the [CLI reference](https://github.com/babar-xagi/Rusjango/blob/main/docs/03-cli-reference.md) for flags, naming rules, and preservation behavior.
 
@@ -203,6 +215,7 @@ See the [CLI reference](https://github.com/babar-xagi/Rusjango/blob/main/docs/03
 | [Middleware](https://github.com/babar-xagi/Rusjango/blob/main/docs/07-middleware.md) | Wrap requests and use the built-in host checks |
 | [Docker](https://github.com/babar-xagi/Rusjango/blob/main/docs/14-docker.md) | Configure containers and persistent data |
 | [Application tests](https://github.com/babar-xagi/Rusjango/blob/main/docs/15-testing.md) | Run an ASGI client with isolated database fixtures |
+| [Admin foundations](https://github.com/babar-xagi/Rusjango/blob/main/docs/17-admin.md) | Register visible fields and use trusted identities with exact grants |
 
 The [documentation home](https://github.com/babar-xagi/Rusjango/blob/main/docs/README.md) also links to architecture, internals, validation, and release guides.
 
@@ -223,7 +236,7 @@ uv run rusjango dev
 
 The repository pins Python 3.12. Set `UV_PYTHON=3.14` to use Python 3.14. Windows and WSL virtual environments cannot be shared.
 
-**Verified for 0.1.5:** 122 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust, distribution, installed-wheel, generated-test, and Docker persistence checks passed. All 22 release jobs succeeded, and a fresh PyPI installation passed. See the [Phase 4 validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/16-phase4-validation.md).
+**Verified locally for 0.1.6:** 155 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust, distribution, installed-wheel, generated-test, and Docker persistence checks passed. See the [Phase 5 validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/18-phase5-validation.md) for evidence and hosted results.
 
 [🤝 Contributing](https://github.com/babar-xagi/Rusjango/blob/main/docs/10-contributing.md) · [✅ Validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/11-validation.md)
 
@@ -231,11 +244,11 @@ The repository pins Python 3.12. Set `UV_PYTHON=3.14` to use Python 3.14. Window
 
 Rusjango is suitable for experimentation and contribution. It has one database configuration per process and no transaction API, relationships, or tracked schema migrations. SQLite needs **3.35+**. Request bodies are buffered in memory.
 
-Auth, admin, OpenAPI/Swagger generation, workers, uploads, streaming, and supported WebSockets remain pending. There are no benchmarks proving a performance advantage.
+Authentication, the browser admin dashboard, OpenAPI/Swagger generation, workers, uploads, streaming, and supported WebSockets remain pending. Admin identities currently come from trusted server code; there is no login or HTTP authorization adapter. There are no benchmarks proving a performance advantage.
 
 > 📌 **Upgrading an old database?** Earlier versions could use a default table named `model`. Back up the data and migrate it explicitly to the corrected table names. This release does not rename that table automatically.
 
-Follow [PROGRESS.md](https://github.com/babar-xagi/Rusjango/blob/main/PROGRESS.md) for implemented and planned phases, and the [0.1.5 release notes](https://github.com/babar-xagi/Rusjango/blob/main/docs/releases/0.1.5.md) for compatibility changes.
+Follow [PROGRESS.md](https://github.com/babar-xagi/Rusjango/blob/main/PROGRESS.md) for implemented and planned phases, and the [0.1.6 release notes](https://github.com/babar-xagi/Rusjango/blob/main/docs/releases/0.1.6.md) for compatibility changes.
 
 ## 📄 License
 

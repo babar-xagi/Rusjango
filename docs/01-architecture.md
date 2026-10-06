@@ -1,6 +1,6 @@
 # 🏗️ Architecture
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 This reference explains where each component lives and how a request moves through the framework. Start with the [tutorial](02-getting-started.md) if you are new to Rusjango.
 
@@ -12,7 +12,8 @@ This reference explains where each component lives and how a request moves throu
 | `python/rusjango/tests` | Runtime, CLI, regression, and PostgreSQL tests |
 | `cli` | Standalone Rust CLI |
 | `crates/rusjango-core` | PyO3 extension with version and placeholder function |
-| `templates` | Templates embedded into the Rust binary |
+| `templates` | Initial project/app/ORM templates embedded into the Rust binary |
+| `python/rusjango/src/rusjango/templates` | Shared Docker/test/admin templates packaged for Python and embedded in Rust |
 | `examples/hello` | School API example |
 | `scripts` | Release checks, distribution smoke tests, and disposable PostgreSQL runner |
 | `docs` | Tutorials, references, internals, and release evidence |
@@ -35,7 +36,7 @@ Routes compile when registered and match in registration order. Middleware is bu
 
 Each installed app owns a fresh `Router()`. Loading `apps.school` mounts its endpoints under `/api/school/`.
 
-Repeated `load_installed_apps()` calls do not duplicate already mounted apps. Models are imported when a database is configured.
+Repeated `load_installed_apps()` calls do not duplicate already mounted apps. Models are imported when a database is configured. When ADMIN is configured, loading also creates an independent AdminSite and discovers synchronous app registration callbacks.
 
 ## 🗃️ Database lifecycle
 
@@ -50,6 +51,12 @@ Repeated `load_installed_apps()` calls do not duplicate already mounted apps. Mo
 SQLite operations share a serialized connection. Inserts read returned rows before commit. PostgreSQL operations acquire and release pool connections.
 
 These mechanisms support individual CRUD operations. A public transaction API and independent per-app database configuration are pending.
+
+## 🛡️ Admin service flow
+
+Trusted server code supplies an AdminIdentity → exact model grant check → validated view/write options → parameterized ORM query → projected fields.
+
+Each application owns its admin registry, while ORM models and the backend remain process-wide. There is no HTTP admin dispatch or authentication adapter. The [admin guide](17-admin.md) describes factory/discovery, read-only defaults, and typed writes.
 
 ## 🦀 Python and Rust responsibilities
 

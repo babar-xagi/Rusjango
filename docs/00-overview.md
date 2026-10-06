@@ -1,6 +1,6 @@
 # 🦀 Welcome to Rusjango
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 Rusjango is an async Python API framework with Django-style application packages. It begins with a small project and lets you add app and database scaffolding through the CLI.
 
@@ -39,6 +39,7 @@ Save this standalone example as `main.py` and run `python -m uvicorn main:app --
 | A database | `rusjango add orm`, then `rusjango migrate` |
 | Project configuration | `settings.py` |
 | Request/response hooks | ASGI middleware |
+| Trusted model data services | `rusjango add admin` and explicit registration |
 
 Applications own independent `Router()` instances. An app named `school` is mounted under `/api/school/`.
 
@@ -56,7 +57,7 @@ The Python package includes the full CLI. A separate Rust CLI implements the sam
 
 Use Rusjango for experimentation and contribution. The ORM supports basic CRUD and table creation, with one database per process. It does not yet provide relationships, transaction APIs, or tracked schema migrations.
 
-Auth, admin, OpenAPI, workers, and AI integrations remain planned features.
+Admin backend services provide explicit visible fields and model-level grants for trusted server callers. Authentication, a browser admin dashboard, OpenAPI, workers, and AI integrations remain planned features.
 
 [PROGRESS.md](../PROGRESS.md) tracks the phases. The [validation record](11-validation.md) documents what has been tested.
 

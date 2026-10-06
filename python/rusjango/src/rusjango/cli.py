@@ -491,8 +491,12 @@ def _cmd_add_feature(args: argparse.Namespace) -> None:
     print(f"{args.target} scaffold {'added' if changed else 'already tracked'}.")
     if args.target == "tests":
         print("Run: uv run --with pytest --with pytest-asyncio pytest tests")
-    else:
+    elif args.target == "docker":
         print("Set ALLOWED_HOSTS, then run: docker compose up --build")
+    else:
+        print(
+            "Configure ADMIN = {'FACTORY': 'admin:create_site'} and register explicit model fields."
+        )
 
 
 def _cmd_remove_feature(args: argparse.Namespace) -> None:
@@ -565,7 +569,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p = add_sub.add_parser("orm", help="Enable async ORM with SQLite (default)")
     p.set_defaults(func=_cmd_add_orm)
 
-    for target in ("docker", "tests"):
+    for target in ("docker", "tests", "admin"):
         p = add_sub.add_parser(
             target, help=f"Add {target} scaffolding without overwriting files"
         )
@@ -589,7 +593,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
     p.set_defaults(func=_cmd_remove_orm)
 
-    for target in ("docker", "tests"):
+    for target in ("docker", "tests", "admin"):
         p = remove_sub.add_parser(
             target, help=f"Remove unchanged generated {target} files"
         )

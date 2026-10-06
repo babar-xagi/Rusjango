@@ -1,6 +1,6 @@
 # 🛠️ CLI reference
 
-**Rusjango 0.1.5 · Alpha**
+**Rusjango 0.1.6 · Alpha**
 
 Inside a uv-managed project, use `uv run rusjango`. In an activated pip environment, use `python -m rusjango`. A standalone Rust binary exposes the same commands.
 
@@ -25,11 +25,12 @@ uv run rusjango add app --help
 | `migrate` | Create missing model tables; return nonzero on failure |
 | `add docker` / `remove docker [--yes]` | Add container settings and remove only unchanged tracked Docker files |
 | `add tests` / `remove tests [--yes]` | Add isolated ASGI pytest files and remove only unchanged tracked files |
+| `add admin` / `remove admin [--yes]` | Add the admin factory and remove only its unchanged tracked file |
 
 ### 🚀 New project
 
 ```bash
-uvx --from rusjango==0.1.5 rusjango new demo
+uvx --from rusjango==0.1.6 rusjango new demo
 ```
 
 The destination must not already exist. Project names accept letters, digits, hyphens, and underscores.
@@ -116,9 +117,21 @@ Rust embeds templates at compile time, so its installed binary does not need a c
 
 The Python package includes the full Python CLI; the separate Rust binary is optional.
 
+## 🛡️ Admin scaffold
+
+```bash
+uv run rusjango add admin
+```
+
+Creates `admin.py` with `create_site(app)`. Set `ADMIN = {"FACTORY": "admin:create_site"}` manually, then register models and explicit visible fields. This supplies backend services and installs no dashboard or HTTP routes.
+
+Set `ADMIN = None` before `uv run rusjango remove admin` if it references this factory. Removal preserves edited files, per-app registration modules, base settings, and dependencies. Both CLIs share the tracked template and preservation rules.
+
+Follow the [admin tutorial](17-admin.md) for identities, grants, data views, and typed writes.
+
 ## 🧭 Commands still pending
 
-Auth, admin, workers, AI, and payments commands are not implemented.
+Auth, workers, AI, and payments commands are not implemented.
 
 ---
 

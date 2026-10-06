@@ -9,7 +9,7 @@ from rusjango.schema import Field, Schema, field_validator
 # instead of the module-level `router` singleton.
 Router = Rusjango
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 try:
     from rusjango import _core as _core  # noqa: F401 — maturin-built extension
