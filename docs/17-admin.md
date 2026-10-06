@@ -110,7 +110,7 @@ Missing records raise `rusjango.orm.DoesNotExist`. Invalid options raise `ValueE
 
 ## ✍️ 5. Enable specific writes
 
-Replace the registration module with:
+Replace the registration module with the following, then restart the server or reload your Python process to apply it:
 
 ```python
 from rusjango import Field, Schema

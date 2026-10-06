@@ -2,7 +2,7 @@
 
 **Rusjango 0.1.6 · Alpha**
 
-Date: 2026-10-06. This record covers the admin backend foundation.
+Date: 2026-10-06. Phase 5 admin foundations are published as 0.1.6 from verified source commit `2a0ae27`.
 
 ## 🧪 Local checks
 
@@ -10,7 +10,7 @@ Date: 2026-10-06. This record covers the admin backend foundation.
 - Four Rust workspace tests, formatting, and clippy passed.
 - Python formatting and undefined/unused-code lint passed.
 - Source archive and native wheel builds passed; the wheel was built from the source archive.
-- A fresh wheel installation verified native version, admin factory/discovery, permission denial, catalog/read projection, typed writes, migration, CRUD, validation, generated pytest execution, and scaffold removal.
+- Fresh wheel installations on Python 3.11 and 3.14 verified native version, admin factory/discovery, permission denial, catalog/read projection, typed writes, migration, CRUD, validation, generated pytest execution, and scaffold removal.
 - The generated Docker image passed nonroot runtime, production host/error behavior, explicit migration, CRUD, admin discovery with no HTTP admin route, restart, and persisted SQLite data.
 
 ## 🔒 Admin regression coverage
@@ -38,7 +38,10 @@ See [contributing](10-contributing.md) for the disposable PostgreSQL helper and 
 
 ## 🌍 Hosted gates
 
-Hosted CI and publication results will be recorded after this candidate is pushed and the release workflow finishes.
+- [Main CI](https://github.com/babar-xagi/Rusjango/actions/runs/37476036253): all 13 jobs passed, including Python 3.11–3.14 on Windows/macOS/Linux and Rust/PostgreSQL/distribution/Docker integration.
+- [Release workflow](https://github.com/babar-xagi/Rusjango/actions/runs/37476482332): all 22 jobs passed, including repeated validation, five platform wheels, source archive, strict metadata checks, PyPI upload, and GitHub release creation.
+- [PyPI 0.1.6](https://pypi.org/project/rusjango/0.1.6/) contains five wheels and one source archive. The [GitHub release](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.6) contains all six artifacts and release notes.
+- A published Linux wheel downloaded from PyPI matched its recorded SHA-256. Its fresh Python 3.14 installation passed native imports/version, all three feature scaffolds, admin permissions/read/write checks, migration, CRUD/validation, generated pytest execution, and feature removal.
 
 ## 🧭 Boundaries
 

@@ -2,7 +2,7 @@
 
 Updated 2026-10-06. Feature milestones are separate from production-readiness claims.
 
-Version 0.1.6 implements Phase 5 admin foundations. Local runtime, both-CLI, PostgreSQL, Rust, distribution, installed-wheel, and Docker persistence checks passed. See [release notes](docs/releases/0.1.6.md) and the [Phase 5 validation record](docs/18-phase5-validation.md). Earlier [Phase 4](docs/16-phase4-validation.md) and [0.1.4 validation](docs/11-validation.md) records remain available.
+Version 0.1.6 implements Phase 5 admin foundations and is published on [PyPI](https://pypi.org/project/rusjango/0.1.6/) and [GitHub](https://github.com/babar-xagi/Rusjango/releases/tag/v0.1.6). All 13 main CI jobs and 22 release jobs passed, alongside local runtime, both-CLI, PostgreSQL, Rust, distribution, installed-wheel, Docker persistence, and fresh PyPI installation checks. See [release notes](docs/releases/0.1.6.md) and the [Phase 5 validation record](docs/18-phase5-validation.md). Earlier [Phase 4](docs/16-phase4-validation.md) and [0.1.4 validation](docs/11-validation.md) records remain available.
 
 | Phase | Scope | Status |
 |---|---|---|

@@ -236,7 +236,7 @@ uv run rusjango dev
 
 The repository pins Python 3.12. Set `UV_PYTHON=3.14` to use Python 3.14. Windows and WSL virtual environments cannot be shared.
 
-**Verified locally for 0.1.6:** 155 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust, distribution, installed-wheel, generated-test, and Docker persistence checks passed. See the [Phase 5 validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/18-phase5-validation.md) for evidence and hosted results.
+**Verified for 0.1.6:** 155 tests passed on Python 3.11 and 3.14 with both CLIs and live PostgreSQL. Rust, distribution, installed-wheel, generated-test, and Docker persistence checks passed. All 13 main CI jobs and 22 release jobs passed, followed by a fresh PyPI installation check. See the [Phase 5 validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/18-phase5-validation.md).
 
 [🤝 Contributing](https://github.com/babar-xagi/Rusjango/blob/main/docs/10-contributing.md) · [✅ Validation record](https://github.com/babar-xagi/Rusjango/blob/main/docs/11-validation.md)
 
